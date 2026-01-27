@@ -1,12 +1,16 @@
 import React, { useRef, useState } from 'react';
-import { Receipt, FileText, Calculator, ArrowRight, CheckCircle, Users, TrendingUp, Shield, Zap, Clock, Check, X, Star, Play, BarChart3, Camera, DollarSign, Crown, Sparkles, Award, Lock, Globe, RefreshCw } from 'lucide-react';
+import { Receipt, FileText, Calculator, ArrowRight, CheckCircle, Users, TrendingUp, Shield, Check, X, Star, Play, BarChart3, Camera, Crown, Sparkles, Award, Lock, Globe } from 'lucide-react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { Button } from '../components/Button';
-import { Card } from '../components/Card';
 import { useApp } from '../context/AppContext';
 import { ProductScreenshot } from '../components/ProductScreenshot';
 import { HorizontalProductScroll } from '../components/HorizontalProductScroll';
+import { ParticleBackground } from '../components/ParticleBackground';
+import { AnimatedGradientOrbs } from '../components/AnimatedGradientOrbs';
+import { ClientLogoMarquee } from '../components/ClientLogoMarquee';
+import { VideoShowcase } from '../components/VideoShowcase';
+
 
 export const LandingPage: React.FC = () => {
   const { setCurrentPage } = useApp();
@@ -132,8 +136,10 @@ export const LandingPage: React.FC = () => {
               {feature.description}
             </p>
 
-            <div className="relative rounded-xl overflow-hidden border border-gray-200 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
-              <ProductScreenshot type={feature.image as any} className="w-full h-48 object-cover border-0 rounded-none shadow-none" />
+            <div className="relative rounded-xl overflow-hidden border border-gray-200 shadow-lg group-hover:shadow-xl transition-shadow duration-300 h-56">
+              <div className="absolute inset-0 transform scale-[0.65] origin-top-left w-[154%] h-[154%]">
+                <ProductScreenshot type={feature.image as any} className="w-full h-full border-0 rounded-none shadow-none" />
+              </div>
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
           </div>
@@ -224,15 +230,22 @@ export const LandingPage: React.FC = () => {
         </div>
       </nav>
 
-      <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden pt-20 gradient-mesh">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-white to-amber-50/30" />
+      <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden pt-20">
+        {/* Premium background layers */}
+        <div className="absolute inset-0 aurora-bg" />
+        <AnimatedGradientOrbs />
+        <ParticleBackground />
+
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-white/30 to-amber-50/30" />
 
         <motion.div
           className="absolute inset-0 opacity-30"
           style={{ y }}
         >
-          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl" />
+          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl float-animation" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl float-animation-delayed" />
+          <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-cyan-500/15 rounded-full blur-3xl float-animation" />
         </motion.div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
@@ -241,14 +254,21 @@ export const LandingPage: React.FC = () => {
               style={{ opacity }}
               className="space-y-8"
             >
+              {/* Premium badge with shimmer */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
-                className="inline-flex items-center space-x-3 glass rounded-full px-6 py-3 shadow-lg"
+                className="inline-flex items-center space-x-3 glass rounded-full px-6 py-3 shadow-lg shimmer"
               >
                 <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-sm font-semibold text-gray-700">Trusted by 5,000+ UAE Businesses</span>
+                <span className="text-sm font-semibold text-gray-700">🏆 Trusted by 5,000+ UAE Businesses</span>
+                <motion.div
+                  animate={{ rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Sparkles size={16} className="text-amber-500" />
+                </motion.div>
               </motion.div>
 
               <motion.h1
@@ -259,11 +279,16 @@ export const LandingPage: React.FC = () => {
               >
                 <span className="block text-gray-900 mb-4">VAT Compliance for</span>
                 <span className="block text-gray-900 mb-4">UAE Businesses</span>
-                <span className="block text-gradient text-4xl md:text-5xl lg:text-6xl font-extrabold mt-6">
+                <motion.span
+                  className="block text-shimmer text-4xl md:text-5xl lg:text-6xl font-extrabold mt-6"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 1, delay: 0.6 }}
+                >
                   Without Expensive
                   <br />
                   Accounting Software
-                </span>
+                </motion.span>
               </motion.h1>
 
               <motion.p
@@ -284,18 +309,23 @@ export const LandingPage: React.FC = () => {
                 <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.98 }}>
                   <Button
                     size="lg"
-                    className="btn-premium bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-2xl glow text-lg px-10 py-6"
+                    className="btn-premium bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-2xl glow-intense text-lg px-10 py-6"
                     onClick={() => setCurrentPage('register')}
                   >
                     <span>Get Started Free</span>
-                    <ArrowRight className="ml-2" size={20} />
+                    <motion.div
+                      animate={{ x: [0, 5, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      <ArrowRight className="ml-2" size={20} />
+                    </motion.div>
                   </Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.98 }}>
                   <Button
                     variant="secondary"
                     size="lg"
-                    className="glass border-2 border-gray-200 text-gray-700 text-lg px-10 py-6"
+                    className="glass border-2 border-gray-200 text-gray-700 text-lg px-10 py-6 hover:border-blue-400"
                   >
                     <Play className="mr-2" size={20} />
                     <span>Watch Live Demo</span>
@@ -307,15 +337,19 @@ export const LandingPage: React.FC = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.6 }}
-                className="flex items-center space-x-8 pt-6"
+                className="flex flex-wrap items-center gap-6 pt-6"
               >
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 bg-emerald-50 px-4 py-2 rounded-full">
                   <CheckCircle className="text-emerald-500" size={20} />
-                  <span className="text-sm text-gray-600 font-medium">No credit card required</span>
+                  <span className="text-sm text-gray-700 font-medium">No credit card required</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="text-emerald-500" size={20} />
-                  <span className="text-sm text-gray-600 font-medium">14-day free trial</span>
+                <div className="flex items-center space-x-2 bg-blue-50 px-4 py-2 rounded-full">
+                  <CheckCircle className="text-blue-500" size={20} />
+                  <span className="text-sm text-gray-700 font-medium">14-day free trial</span>
+                </div>
+                <div className="flex items-center space-x-2 bg-amber-50 px-4 py-2 rounded-full">
+                  <Shield className="text-amber-500" size={20} />
+                  <span className="text-sm text-gray-700 font-medium">FTA Compliant</span>
                 </div>
               </motion.div>
             </motion.div>
@@ -339,12 +373,33 @@ export const LandingPage: React.FC = () => {
                     ease: "easeInOut"
                   }}
                 />
+
+                {/* Floating decorative elements */}
+                <motion.div
+                  className="absolute -top-8 -right-8 w-20 h-20 bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-xl z-20"
+                  animate={{ y: [0, -10, 0], rotate: [0, 5, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <Crown className="text-white" size={32} />
+                </motion.div>
+
+                <motion.div
+                  className="absolute -bottom-4 -left-8 w-16 h-16 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center shadow-xl z-20"
+                  animate={{ y: [0, 10, 0], rotate: [0, -5, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                >
+                  <CheckCircle className="text-white" size={28} />
+                </motion.div>
+
                 <div className="relative glass-dark rounded-2xl shadow-2xl overflow-hidden border border-white/20">
                   <div className="bg-gray-800 px-4 py-3 flex items-center space-x-2 border-b border-gray-700">
-                    <div className="w-3 h-3 rounded-full bg-red-500" />
-                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                    <div className="w-3 h-3 rounded-full bg-green-500" />
-                    <div className="ml-4 text-xs text-gray-400 font-mono">app.dubaitaxassistant.com</div>
+                    <div className="w-3 h-3 rounded-full bg-red-500 shadow-lg shadow-red-500/50" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-lg shadow-yellow-500/50" />
+                    <div className="w-3 h-3 rounded-full bg-green-500 shadow-lg shadow-green-500/50" />
+                    <div className="ml-4 text-xs text-gray-400 font-mono flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      app.dubaitaxassistant.com
+                    </div>
                   </div>
                   <ProductScreenshot type="dashboard" animated className="border-0 rounded-none shadow-none h-[600px]" />
                 </div>
@@ -352,6 +407,21 @@ export const LandingPage: React.FC = () => {
             </motion.div>
           </div>
         </div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <div className="w-6 h-10 border-2 border-gray-400 rounded-full flex justify-center pt-2">
+            <motion.div
+              className="w-1.5 h-3 bg-blue-500 rounded-full"
+              animate={{ y: [0, 8, 0], opacity: [1, 0.5, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+          </div>
+        </motion.div>
       </section>
 
       <section className="py-8 bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900">
@@ -379,6 +449,23 @@ export const LandingPage: React.FC = () => {
               </motion.div>
             ))}
           </motion.div>
+        </div>
+      </section>
+
+      {/* Client Logo Marquee - Social Proof */}
+      <section className="py-16 bg-white border-y border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-8"
+          >
+            <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+              Trusted by Leading UAE Businesses
+            </p>
+          </motion.div>
+          <ClientLogoMarquee />
         </div>
       </section>
 
@@ -489,11 +576,10 @@ export const LandingPage: React.FC = () => {
                 <motion.button
                   key={tab.key}
                   onClick={() => setActiveFeature(tab.key as any)}
-                  className={`px-8 py-4 rounded-xl font-semibold text-base flex items-center space-x-3 transition-all duration-300 ${
-                    activeFeature === tab.key
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-xl glow'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                  }`}
+                  className={`px-8 py-4 rounded-xl font-semibold text-base flex items-center space-x-3 transition-all duration-300 ${activeFeature === tab.key
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-xl glow'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
                   whileHover={{ scale: activeFeature === tab.key ? 1 : 1.03 }}
                   whileTap={{ scale: 0.97 }}
                 >
@@ -628,29 +714,7 @@ export const LandingPage: React.FC = () => {
             </p>
           </motion.div>
 
-          <motion.div
-            className="relative group cursor-pointer"
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            whileHover={{ scale: 1.02 }}
-          >
-            <div className="absolute -inset-6 bg-gradient-to-r from-blue-600/30 to-cyan-600/30 rounded-3xl blur-3xl opacity-50 group-hover:opacity-75 transition-opacity" />
-            <div className="relative glass-dark rounded-3xl overflow-hidden shadow-2xl border border-white/10">
-              <div className="absolute inset-0 flex items-center justify-center z-10">
-                <motion.div
-                  className="w-28 h-28 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/30 group-hover:bg-white/20 transition-all shadow-2xl"
-                  whileHover={{ scale: 1.15 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Play size={44} className="text-white ml-2" />
-                </motion.div>
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-transparent" />
-              <ProductScreenshot type="dashboard" className="opacity-60 group-hover:opacity-80 transition-opacity border-0 rounded-none shadow-none h-[500px]" />
-            </div>
-          </motion.div>
+          <VideoShowcase />
         </div>
       </section>
 
@@ -752,21 +816,19 @@ export const LandingPage: React.FC = () => {
             <div className="inline-flex glass rounded-2xl p-2">
               <button
                 onClick={() => setPricingToggle('monthly')}
-                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
-                  pricingToggle === 'monthly'
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${pricingToggle === 'monthly'
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setPricingToggle('annual')}
-                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 ${
-                  pricingToggle === 'annual'
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
+                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 ${pricingToggle === 'annual'
+                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 <span>Annual</span>
                 <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">Save 20%</span>

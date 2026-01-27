@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, FileText, Camera, Calculator, Receipt, DollarSign, TrendingUp, CheckCircle } from 'lucide-react';
+import { FileText, Camera, Calculator, Receipt, DollarSign, TrendingUp, CheckCircle } from 'lucide-react';
 
 interface ProductScreenshotProps {
   type: 'dashboard' | 'invoice' | 'receipt' | 'calculator' | 'returns' | 'expenses';
@@ -56,29 +56,34 @@ export const ProductScreenshot: React.FC<ProductScreenshotProps> = ({ type, clas
         </div>
       </div>
       <div className="space-y-3">
-        <div className="bg-white rounded-lg p-4 border border-gray-200">
+        <div className="bg-white rounded-lg p-3 border border-gray-200">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Recent Invoices</span>
-            <BarChart3 size={16} className="text-gray-400" />
+            <span className="text-xs font-semibold text-gray-700">Recent Invoices</span>
+            <span className="text-[10px] text-blue-600 font-medium">View All</span>
           </div>
-          {[85, 65, 92, 78].map((width, i) => (
-            <motion.div
-              key={i}
-              className="mb-2 last:mb-0"
-              initial={animated ? { width: 0 } : {}}
-              animate={animated ? { width: '100%' } : {}}
-              transition={{ delay: 0.4 + i * 0.1, duration: 0.6 }}
-            >
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-full"
-                  initial={animated ? { width: '0%' } : {}}
-                  animate={animated ? { width: `${width}%` } : {}}
-                  transition={{ delay: 0.5 + i * 0.1, duration: 0.8 }}
-                />
-              </div>
-            </motion.div>
-          ))}
+          <div className="space-y-1.5">
+            {[
+              { id: 'INV-042', client: 'Dubai Tech', amount: '12,500', status: 'paid' },
+              { id: 'INV-041', client: 'Al Maktoum', amount: '8,750', status: 'pending' },
+              { id: 'INV-040', client: 'Emirates Co.', amount: '5,200', status: 'paid' },
+            ].map((inv, i) => (
+              <motion.div
+                key={i}
+                className="flex items-center justify-between py-1.5 px-2 rounded bg-gray-50"
+                initial={animated ? { opacity: 0 } : {}}
+                animate={animated ? { opacity: 1 } : {}}
+                transition={{ delay: 0.3 + i * 0.1 }}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={`w-1.5 h-1.5 rounded-full ${inv.status === 'paid' ? 'bg-green-500' : 'bg-amber-500'}`} />
+                  <span className="text-[10px] font-medium text-gray-700">{inv.id}</span>
+                  <span className="text-[10px] text-gray-400">•</span>
+                  <span className="text-[10px] text-gray-500">{inv.client}</span>
+                </div>
+                <span className="text-[10px] font-semibold text-gray-800">AED {inv.amount}</span>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

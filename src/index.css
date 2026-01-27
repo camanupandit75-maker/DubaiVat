@@ -1,3 +1,83 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --color-navy-50: 240 248 255;
+    --color-navy-100: 224 242 254;
+    --color-navy-200: 186 230 253;
+    --color-navy-300: 125 211 252;
+    --color-navy-400: 56 189 248;
+    --color-navy-500: 14 165 233;
+    --color-navy-600: 2 132 199;
+    --color-navy-700: 3 105 161;
+    --color-navy-800: 7 89 133;
+    --color-navy-900: 12 74 110;
+    --color-navy-950: 8 47 73;
+
+    --color-gold-50: 254 252 232;
+    --color-gold-100: 254 249 195;
+    --color-gold-200: 254 240 138;
+    --color-gold-300: 253 224 71;
+    --color-gold-400: 250 204 21;
+    --color-gold-500: 234 179 8;
+    --color-gold-600: 202 138 4;
+    --color-gold-700: 161 98 7;
+    --color-gold-800: 133 77 14;
+    --color-gold-900: 113 63 18;
+  }
+
+  * {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/20 shadow-xl;
+  }
+
+  .glass-dark {
+    @apply bg-gray-900/70 backdrop-blur-xl border border-white/10 shadow-2xl;
+  }
+
+  .glow {
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.3), 0 0 40px rgba(14, 165, 233, 0.1);
+  }
+
+  .glow-gold {
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.3), 0 0 40px rgba(234, 179, 8, 0.1);
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500;
+  }
+
+  .text-gradient-gold {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-600 via-amber-500 to-yellow-500;
+  }
+
+  .card-premium {
+    @apply glass rounded-2xl p-8 hover:shadow-2xl transition-all duration-500 hover:-translate-y-2;
+  }
+
+  .btn-premium {
+    @apply relative overflow-hidden rounded-xl px-8 py-4 font-semibold transition-all duration-300 hover:scale-105 hover:shadow-xl;
+  }
+
+  .gradient-mesh {
+    background:
+      radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, rgba(234, 179, 8, 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.1) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, rgba(234, 179, 8, 0.1) 0px, transparent 50%);
+  }
+}

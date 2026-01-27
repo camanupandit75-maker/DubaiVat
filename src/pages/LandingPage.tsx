@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Receipt, FileText, Calculator, ArrowRight, CheckCircle, Users, TrendingUp, Shield, Zap, Clock, Check, X, Star, Play, BarChart3, Camera, DollarSign, Crown, Sparkles, Award } from 'lucide-react';
+import { Receipt, FileText, Calculator, ArrowRight, CheckCircle, Users, TrendingUp, Shield, Zap, Clock, Check, X, Star, Play, BarChart3, Camera, DollarSign, Crown, Sparkles, Award, Lock, Globe, RefreshCw } from 'lucide-react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { Button } from '../components/Button';
@@ -11,6 +11,14 @@ export const LandingPage: React.FC = () => {
   const { setCurrentPage } = useApp();
   const [activeFeature, setActiveFeature] = useState<'dashboard' | 'invoice' | 'receipt' | 'returns'>('dashboard');
   const [showStickyCTA, setShowStickyCTA] = useState(false);
+  const [pricingToggle, setPricingToggle] = useState<'monthly' | 'annual'>('monthly');
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start start", "end start"]
+  });
+  const y = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -22,33 +30,26 @@ export const LandingPage: React.FC = () => {
 
   const features = [
     {
-      icon: <Receipt size={40} />,
-      title: 'Turn Receipt Chaos Into Organized Records',
-      description: 'Scan, store, and retrieve receipts instantly. Never lose a tax-deductible expense again.',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
+      icon: <Camera size={32} />,
+      title: 'Instant Receipt Recognition',
+      description: 'Snap photos of receipts and our OCR extracts all details automatically. Never manually enter a receipt again.',
+      color: 'from-blue-500 to-cyan-500',
+      image: 'receipt'
     },
     {
-      icon: <FileText size={40} />,
-      title: 'Send Professional UAE VAT Invoices',
-      description: 'FTA-compliant invoices generated in minutes. No accounting degree required.',
-      color: 'text-green-600',
-      bgColor: 'bg-green-100'
+      icon: <FileText size={32} />,
+      title: 'FTA-Compliant Invoices',
+      description: 'Generate UAE VAT invoices in seconds with automatic tax calculations and professional templates.',
+      color: 'from-emerald-500 to-teal-500',
+      image: 'invoice'
     },
     {
-      icon: <BarChart3 size={40} />,
-      title: 'Always Know How Much VAT You Owe',
-      description: 'Automatic VAT tracking with real-time summaries. Stop guessing, start knowing.',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100'
+      icon: <BarChart3 size={32} />,
+      title: 'Real-Time VAT Dashboard',
+      description: 'See your VAT position at a glance. Track collected vs paid, and know exactly what you owe.',
+      color: 'from-violet-500 to-purple-500',
+      image: 'dashboard'
     }
-  ];
-
-  const productFeatures = [
-    { icon: <BarChart3 size={20} />, text: 'Track VAT collected vs VAT paid' },
-    { icon: <FileText size={20} />, text: 'Generate UAE VAT invoices in seconds' },
-    { icon: <Camera size={20} />, text: 'Organize receipts with OCR scanning' },
-    { icon: <Calculator size={20} />, text: 'Prepare VAT return summaries instantly' }
   ];
 
   const testimonials = [
@@ -60,7 +61,8 @@ export const LandingPage: React.FC = () => {
       text: 'Saved me AED 12,000/year compared to QuickBooks. Perfect for UAE freelancers who need simple VAT tracking.',
       rating: 5,
       avatar: 'A',
-      verified: true
+      verified: true,
+      metric: 'Saved AED 12,000/year'
     },
     {
       name: 'Sarah Khan',
@@ -70,7 +72,8 @@ export const LandingPage: React.FC = () => {
       text: 'Setup took 10 minutes. The receipt scanner is a game-changer — I used to spend hours organizing paper receipts.',
       rating: 5,
       avatar: 'S',
-      verified: true
+      verified: true,
+      metric: 'Setup in 10 minutes'
     },
     {
       name: 'Omar Abdullah',
@@ -80,77 +83,60 @@ export const LandingPage: React.FC = () => {
       text: 'I recommend this to all my small business clients. Much easier than teaching them Zoho or QuickBooks.',
       rating: 5,
       avatar: 'O',
-      verified: true
+      verified: true,
+      metric: '15 clients onboarded'
     }
   ];
 
-  const perfectFor = [
-    'Freelancers & Consultants',
-    'Small Retail Shops',
-    'Home-Based Businesses',
-    'Service Providers',
-    'Accountants Managing Clients'
-  ];
-
-  const notIdealFor = [
-    'Large Enterprises (50+ employees)',
-    'Payroll-Heavy Corporations',
-    'Complex Inventory Management',
-    'Multi-Currency Operations'
-  ];
-
   const comparisonData = [
-    { feature: 'Monthly Price', zoho: 'AED 250+', us: 'AED 99', highlight: true },
-    { feature: 'Ease of Use', zoho: 'Complex', us: 'Simple', highlight: false },
-    { feature: 'UAE VAT Focus', zoho: 'Generic', us: 'Built for UAE', highlight: true },
-    { feature: 'Learning Curve', zoho: '2-3 weeks', us: '10 minutes', highlight: true },
-    { feature: 'FTA Compliance', zoho: 'Manual setup', us: 'Built-in', highlight: false }
+    { feature: 'Monthly Price', zoho: 'AED 165+', us: 'AED 49' },
+    { feature: 'UAE VAT Focus', zoho: 'Generic', us: 'Built for UAE' },
+    { feature: 'Setup Time', zoho: '2+ hours', us: '10 minutes' },
+    { feature: 'Receipt OCR', zoho: 'Extra cost', us: 'Included' },
+    { feature: 'Learning Curve', zoho: 'Steep', us: 'Instant' },
+    { feature: 'Customer Support', zoho: 'Offshore', us: 'UAE-based' }
   ];
 
-  const productScreens = [
-    { title: 'VAT Dashboard', icon: BarChart3, color: 'from-blue-500 to-blue-600' },
-    { title: 'Invoice Generator', icon: FileText, color: 'from-green-500 to-green-600' },
-    { title: 'Receipt Scanner', icon: Camera, color: 'from-purple-500 to-purple-600' },
-    { title: 'VAT Calculator', icon: Calculator, color: 'from-orange-500 to-orange-600' },
-    { title: 'VAT Returns', icon: Receipt, color: 'from-pink-500 to-pink-600' },
-    { title: 'Expense Tracker', icon: DollarSign, color: 'from-cyan-500 to-cyan-600' }
+  const trustBadges = [
+    { icon: <Shield size={24} />, label: 'FTA VAT Compliant', desc: '100% compliant' },
+    { icon: <Globe size={24} />, label: 'Built for UAE', desc: 'Local expertise' },
+    { icon: <Lock size={24} />, label: 'Bank-Level Security', desc: 'AES-256 encrypted' },
+    { icon: <Users size={24} />, label: '5,000+ Businesses', desc: 'Trust us' }
   ];
 
   const FeatureCard = ({ feature, index }: any) => {
-    const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.1 });
+    const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.2 });
 
     return (
       <motion.div
         ref={ref}
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 40 }}
         animate={inView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.7, delay: index * 0.15, ease: [0.25, 0.4, 0.25, 1] }}
+        transition={{ duration: 0.6, delay: index * 0.15, ease: [0.25, 0.4, 0.25, 1] }}
+        className="group"
       >
-        <motion.div
-          whileHover={{ y: -8, transition: { duration: 0.3, ease: "easeOut" } }}
-          className="relative"
-        >
-          <Card hover className="text-center group relative overflow-hidden h-full border-2 border-gray-100 hover:border-[#C5A572]/30 transition-all duration-300">
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            />
-            <div className="relative z-10 p-8">
-              <motion.div
-                className={`w-20 h-20 ${feature.bgColor} rounded-2xl flex items-center justify-center mx-auto mb-6 ${feature.color} shadow-md group-hover:shadow-xl transition-shadow duration-300`}
-                whileHover={{ scale: 1.08, rotate: 3 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                {feature.icon}
-              </motion.div>
-              <h3 className="text-xl font-bold text-[#1B4B7F] mb-4 group-hover:text-[#C5A572] transition-colors duration-300">
-                {feature.title}
-              </h3>
-              <p className="text-gray-600 leading-relaxed text-[15px]">
-                {feature.description}
-              </p>
+        <div className="card-premium relative overflow-hidden">
+          <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${feature.color}`} />
+          <div className={`absolute -right-8 -top-8 w-32 h-32 bg-gradient-to-br ${feature.color} opacity-10 rounded-full blur-2xl group-hover:opacity-20 transition-opacity duration-500`} />
+
+          <div className="relative z-10">
+            <div className={`inline-flex p-4 rounded-xl bg-gradient-to-br ${feature.color} text-white mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+              {feature.icon}
             </div>
-          </Card>
-        </motion.div>
+
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+              {feature.title}
+            </h3>
+            <p className="text-gray-600 leading-relaxed mb-6">
+              {feature.description}
+            </p>
+
+            <div className="relative rounded-xl overflow-hidden border border-gray-200 shadow-lg group-hover:shadow-xl transition-shadow duration-300">
+              <ProductScreenshot type={feature.image as any} className="w-full h-48 object-cover border-0 rounded-none shadow-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </div>
+          </div>
+        </div>
       </motion.div>
     );
   };
@@ -177,7 +163,7 @@ export const LandingPage: React.FC = () => {
             animate={{ opacity: isHovered ? 0.5 : 0 }}
             transition={{ duration: 0.3 }}
           />
-          <span className="font-bold text-[#1B4B7F] inline-flex items-center justify-center relative z-10">
+          <span className="font-bold text-[#0ea5e9] inline-flex items-center justify-center relative z-10">
             {row.us}
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
@@ -189,7 +175,7 @@ export const LandingPage: React.FC = () => {
                 damping: 15
               }}
             >
-              <CheckCircle className="ml-2 text-green-600" size={20} />
+              <CheckCircle className="ml-2 text-emerald-600" size={20} />
             </motion.div>
           </span>
         </td>
@@ -199,26 +185,37 @@ export const LandingPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <nav className="bg-white/95 border-b border-gray-200 sticky top-0 z-50 backdrop-blur-lg shadow-sm">
+      <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-gray-200/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20">
             <motion.div
-              className="flex items-center space-x-2"
-              whileHover={{ scale: 1.05 }}
+              className="flex items-center space-x-3"
+              whileHover={{ scale: 1.02 }}
             >
-              <Calculator className="text-[#C5A572]" size={32} />
-              <span className="text-xl font-bold text-[#1B4B7F]">Dubai Tax Assistant</span>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center shadow-lg">
+                <Calculator className="text-white" size={24} />
+              </div>
+              <span className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">Dubai Tax Assistant</span>
             </motion.div>
+
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-600 hover:text-[#1B4B7F] transition-colors font-medium">Features</a>
-              <a href="#pricing" className="text-gray-600 hover:text-[#1B4B7F] transition-colors font-medium">Pricing</a>
-              <a href="#testimonials" className="text-gray-600 hover:text-[#1B4B7F] transition-colors font-medium">Reviews</a>
-              <Button variant="secondary" size="sm" onClick={() => setCurrentPage('login')}>
-                Login
-              </Button>
+              <a href="#features" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">Features</a>
+              <a href="#pricing" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">Pricing</a>
+              <a href="#testimonials" className="text-gray-700 hover:text-blue-600 transition-colors font-medium">Reviews</a>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <motion.button
+                className="text-gray-700 hover:text-blue-600 font-semibold transition-colors"
+                onClick={() => setCurrentPage('login')}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Sign in
+              </motion.button>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button size="sm" onClick={() => setCurrentPage('register')}>
-                  Get Started Free
+                <Button onClick={() => setCurrentPage('register')} className="btn-premium bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg glow">
+                  Get Started
                 </Button>
               </motion.div>
             </div>
@@ -226,559 +223,186 @@ export const LandingPage: React.FC = () => {
         </div>
       </nav>
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#f8fafc] via-white to-blue-50 pt-20 pb-32">
-        <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
-        <div className="absolute top-20 right-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
-        <div className="absolute top-40 left-10 w-72 h-72 bg-[#C5A572] rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
-        <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000"></div>
+      <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden pt-20 gradient-mesh">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-white to-amber-50/30" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <motion.div
+          className="absolute inset-0 opacity-30"
+          style={{ y }}
+        >
+          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-amber-500/20 rounded-full blur-3xl" />
+        </motion.div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
             <motion.div
-              className="max-w-xl"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
+              style={{ opacity }}
+              className="space-y-8"
             >
               <motion.div
-                className="inline-flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-medium mb-6"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+                className="inline-flex items-center space-x-3 glass rounded-full px-6 py-3 shadow-lg"
               >
-                <Sparkles size={16} />
-                <span>Trusted by 5,000+ UAE Freelancers & Small Businesses</span>
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-sm font-semibold text-gray-700">Trusted by 5,000+ UAE Businesses</span>
               </motion.div>
 
               <motion.h1
-                className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#1B4B7F] mb-6 leading-[1.15]"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.8 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1]"
               >
-                <span className="block mb-2">VAT Compliance for</span>
-                <span className="block mb-2">UAE Businesses</span>
-                <span className="relative inline-block mt-3">
-                  <span className="block text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-[#C5A572] via-[#d4b878] to-[#C5A572] bg-clip-text text-transparent relative z-10">
-                    Without Expensive Accounting Software
-                  </span>
-                  <motion.span
-                    className="absolute -inset-2 bg-gradient-to-r from-[#C5A572]/30 via-[#d4b878]/30 to-[#C5A572]/30 blur-2xl"
-                    animate={{
-                      opacity: [0.5, 0.8, 0.5],
-                      scale: [1, 1.05, 1],
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  />
+                <span className="block text-gray-900 mb-4">VAT Compliance for</span>
+                <span className="block text-gray-900 mb-4">UAE Businesses</span>
+                <span className="block text-gradient text-4xl md:text-5xl lg:text-6xl font-extrabold mt-6">
+                  Without Expensive
+                  <br />
+                  Accounting Software
                 </span>
               </motion.h1>
 
               <motion.p
-                className="text-lg md:text-xl text-gray-600 mb-8 leading-relaxed"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="text-xl text-gray-600 leading-relaxed max-w-2xl"
               >
-                Track VAT, scan receipts, generate invoices, and avoid FTA penalties — built for freelancers and small businesses in the UAE.
+                Track VAT, scan receipts, generate invoices, and avoid FTA penalties — built specifically for freelancers and small businesses in the UAE.
               </motion.p>
 
               <motion.div
-                className="flex flex-col sm:flex-row gap-4 mb-8"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+                className="flex flex-col sm:flex-row gap-4"
               >
-                <motion.div
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
+                <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.98 }}>
                   <Button
                     size="lg"
-                    className="text-lg px-8 py-6 shadow-2xl relative overflow-hidden group focus:ring-4 focus:ring-blue-300 transition-all"
+                    className="btn-premium bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-2xl glow text-lg px-10 py-6"
                     onClick={() => setCurrentPage('register')}
                   >
-                    <span className="relative z-10 flex items-center gap-2">
-                      Get Started Free
-                      <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform duration-300" />
-                    </span>
+                    <span>Get Started Free</span>
+                    <ArrowRight className="ml-2" size={20} />
                   </Button>
                 </motion.div>
-                <motion.div
-                  whileHover={{ scale: 1.03, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button variant="secondary" size="lg" className="text-lg px-8 py-6 group shadow-lg">
-                    <Play size={20} className="group-hover:scale-110 transition-transform duration-300" />
-                    Watch Live Demo
+                <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="glass border-2 border-gray-200 text-gray-700 text-lg px-10 py-6"
+                  >
+                    <Play className="mr-2" size={20} />
+                    <span>Watch Live Demo</span>
                   </Button>
                 </motion.div>
               </motion.div>
 
               <motion.div
-                className="flex flex-wrap gap-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.8 }}
+                transition={{ duration: 0.8, delay: 0.6 }}
+                className="flex items-center space-x-8 pt-6"
               >
-                {[
-                  { icon: Shield, text: 'FTA VAT Compliant', color: 'text-green-600' },
-                  { icon: Users, text: '5,000+ UAE Businesses', color: 'text-blue-600' },
-                  { icon: Award, text: 'Save AED 1,000+/year', color: 'text-[#C5A572]' }
-                ].map((item, i) => (
-                  <motion.div
-                    key={i}
-                    className="flex items-center space-x-2 text-sm text-gray-700 bg-white/80 backdrop-blur-sm rounded-lg py-2 px-4 border border-gray-200/50 shadow-sm"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.9 + i * 0.1 }}
-                    whileHover={{ scale: 1.05, y: -2, borderColor: 'rgba(27, 75, 127, 0.3)', transition: { duration: 0.2 } }}
-                  >
-                    <item.icon className={item.color} size={18} />
-                    <span className="font-medium">{item.text}</span>
-                  </motion.div>
-                ))}
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="text-emerald-500" size={20} />
+                  <span className="text-sm text-gray-600 font-medium">No credit card required</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle className="text-emerald-500" size={20} />
+                  <span className="text-sm text-gray-600 font-medium">14-day free trial</span>
+                </div>
               </motion.div>
             </motion.div>
 
             <motion.div
-              className="relative hidden lg:block"
-              initial={{ opacity: 0, x: 30, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1, delay: 0.4 }}
+              className="relative lg:block hidden"
             >
-              <div className="absolute -inset-8 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-3xl blur-3xl"></div>
-              <motion.div
-                className="relative"
-                animate={{
-                  y: [0, -15, 0],
-                }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
+              <div className="relative">
                 <motion.div
-                  className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl"
-                  style={{
-                    transform: 'perspective(1200px) rotateY(-8deg) rotateX(2deg)',
+                  className="absolute -inset-4 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 rounded-3xl blur-3xl"
+                  animate={{
+                    scale: [1, 1.05, 1],
+                    opacity: [0.5, 0.7, 0.5]
                   }}
-                  whileHover={{
-                    transform: 'perspective(1200px) rotateY(0deg) rotateX(0deg)',
-                    transition: { duration: 0.4 }
+                  transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    ease: "easeInOut"
                   }}
-                >
+                />
+                <div className="relative glass-dark rounded-2xl shadow-2xl overflow-hidden border border-white/20">
                   <div className="bg-gray-800 px-4 py-3 flex items-center space-x-2 border-b border-gray-700">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <div className="ml-4 text-xs text-gray-400 font-mono">Dubai Tax Assistant</div>
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                    <div className="ml-4 text-xs text-gray-400 font-mono">app.dubaitaxassistant.com</div>
                   </div>
-                  <ProductScreenshot type="dashboard" animated className="border-0 rounded-none shadow-none" />
-                </motion.div>
-              </motion.div>
-
-              <motion.div
-                className="absolute -bottom-6 -right-6 bg-white rounded-xl shadow-xl border border-gray-200 p-4 backdrop-blur-sm"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1.2, duration: 0.5 }}
-                whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <CheckCircle className="text-green-600" size={20} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500">Net VAT Owed</p>
-                    <p className="text-lg font-bold text-[#1B4B7F]">AED 7,330</p>
-                  </div>
+                  <ProductScreenshot type="dashboard" animated className="border-0 rounded-none shadow-none h-[600px]" />
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
           </div>
         </div>
       </section>
 
-      <section className="py-12 bg-gradient-to-br from-[#1B4B7F] to-[#153d6b] text-white">
+      <section className="py-8 bg-gradient-to-r from-gray-900 via-blue-900 to-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            className="grid md:grid-cols-4 gap-8 items-center text-center md:text-left"
+            className="grid grid-cols-2 md:grid-cols-4 gap-8"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
           >
-            <motion.div
-              className="flex flex-col md:flex-row items-center justify-center md:justify-start space-x-3"
-              whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-            >
-              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-2 md:mb-0 backdrop-blur-sm">
-                <Shield className="text-[#C5A572]" size={24} />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">5,000+</p>
-                <p className="text-sm text-blue-100">UAE Businesses</p>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="flex flex-col md:flex-row items-center justify-center md:justify-start space-x-3"
-              whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-            >
-              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-2 md:mb-0 backdrop-blur-sm">
-                <CheckCircle className="text-green-400" size={24} />
-              </div>
-              <div>
-                <p className="text-lg font-bold">FTA Compliant</p>
-                <p className="text-sm text-blue-100">100% VAT Ready</p>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="flex flex-col md:flex-row items-center justify-center md:justify-start space-x-3"
-              whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-            >
-              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-2 md:mb-0 backdrop-blur-sm">
-                <span className="text-2xl">🇦🇪</span>
-              </div>
-              <div>
-                <p className="text-lg font-bold">Built for UAE</p>
-                <p className="text-sm text-blue-100">Local Business Focused</p>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="flex flex-col md:flex-row items-center justify-center md:justify-start space-x-3"
-              whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
-            >
-              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-2 md:mb-0 backdrop-blur-sm">
-                <Award className="text-[#C5A572]" size={24} />
-              </div>
-              <div>
-                <p className="text-lg font-bold">Save AED 1,000+</p>
-                <p className="text-sm text-blue-100">vs Zoho Books</p>
-              </div>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-[#1B4B7F] mb-4">
-              See Dubai Tax Assistant in Action
-            </h2>
-            <p className="text-xl text-gray-600">
-              Real screens from the product — not mockups
-            </p>
-          </motion.div>
-
-          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
-            <motion.div
-              className="space-y-6"
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-            >
-              {productFeatures.map((feature, index) => (
-                <motion.div
-                  key={index}
-                  className="flex items-start space-x-4 p-4 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent transition-all group"
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ x: 5 }}
-                >
-                  <motion.div
-                    className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center flex-shrink-0 text-[#1B4B7F] group-hover:shadow-lg transition-shadow"
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                  >
-                    {feature.icon}
-                  </motion.div>
-                  <div>
-                    <p className="text-lg font-semibold text-gray-900">{feature.text}</p>
-                  </div>
-                </motion.div>
-              ))}
+            {trustBadges.map((badge, index) => (
               <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                key={index}
+                className="flex flex-col items-center text-center space-y-2"
+                whileHover={{ scale: 1.05, y: -2 }}
+                transition={{ duration: 0.2 }}
               >
-                <Button size="lg" className="w-full mt-6" onClick={() => setCurrentPage('register')}>
-                  Start Using It Free <ArrowRight size={20} />
-                </Button>
-              </motion.div>
-            </motion.div>
-
-            <motion.div
-              className="relative"
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-            >
-              <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl opacity-20 blur-2xl"></div>
-              <motion.div
-                className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl overflow-hidden"
-                style={{ transform: 'perspective(1000px) rotateY(-5deg)' }}
-                whileHover={{
-                  scale: 1.02,
-                  rotateY: 0,
-                  transition: { duration: 0.3 }
-                }}
-                animate={{
-                  y: [0, -10, 0],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              >
-                <div className="bg-gray-800 px-4 py-3 flex items-center space-x-2 border-b border-gray-700">
-                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white">
+                  {badge.icon}
                 </div>
-                <div className="p-6 bg-gradient-to-br from-blue-50 to-white backdrop-blur-xl bg-white/80">
-                  <motion.div
-                    className="grid grid-cols-2 gap-4 mb-4"
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.2 }}
-                  >
-                    <motion.div
-                      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
-                      whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
-                    >
-                      <p className="text-xs text-gray-600 mb-1">VAT Collected</p>
-                      <p className="text-2xl font-bold text-green-600">AED 15,750</p>
-                    </motion.div>
-                    <motion.div
-                      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
-                      whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
-                    >
-                      <p className="text-xs text-gray-600 mb-1">VAT Paid</p>
-                      <p className="text-2xl font-bold text-red-600">AED 8,420</p>
-                    </motion.div>
-                  </motion.div>
-                  <motion.div
-                    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
-                    whileHover={{ scale: 1.05, boxShadow: "0 10px 20px rgba(0,0,0,0.1)" }}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <p className="text-xs text-gray-600 mb-1">Net VAT Owed</p>
-                    <p className="text-3xl font-bold text-[#1B4B7F]">AED 7,330</p>
-                  </motion.div>
-                  <div className="mt-4 space-y-2">
-                    {[65, 85, 45, 75].map((width, i) => (
-                      <motion.div
-                        key={i}
-                        className="h-8 bg-gray-200 rounded overflow-hidden"
-                        initial={{ width: 0 }}
-                        whileInView={{ width: "100%" }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.4 + i * 0.1, duration: 0.6 }}
-                      >
-                        <motion.div
-                          className="h-full bg-gradient-to-r from-blue-500 to-blue-600"
-                          initial={{ width: "0%" }}
-                          whileInView={{ width: `${width}%` }}
-                          viewport={{ once: true }}
-                          transition={{ delay: 0.5 + i * 0.1, duration: 0.8 }}
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-white overflow-hidden">
-        <motion.div
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <motion.div
-            className="inline-flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-4"
-            whileHover={{ scale: 1.05 }}
-          >
-            <BarChart3 size={16} />
-            <span>Real Screens from the Product — Not Mockups</span>
-          </motion.div>
-          <h2 className="text-3xl md:text-4xl font-bold text-[#1B4B7F] mb-3">
-            See Every Feature in Action
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            From VAT tracking to invoice generation, everything you need in one beautiful interface
-          </p>
-        </motion.div>
-        <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none"></div>
-          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
-          <div className="flex space-x-8 animate-scroll-smooth py-8">
-            {[
-              { type: 'dashboard', title: 'VAT Dashboard', desc: 'Real-time VAT tracking' },
-              { type: 'invoice', title: 'Invoice Generator', desc: 'FTA-compliant invoices' },
-              { type: 'receipt', title: 'Receipt Scanner', desc: 'OCR expense capture' },
-              { type: 'calculator', title: 'VAT Calculator', desc: 'Instant calculations' },
-              { type: 'returns', title: 'VAT Returns', desc: 'Quarterly filing prep' },
-              { type: 'expenses', title: 'Expense Tracker', desc: 'Categorized expenses' },
-              { type: 'dashboard', title: 'VAT Dashboard', desc: 'Real-time VAT tracking' },
-              { type: 'invoice', title: 'Invoice Generator', desc: 'FTA-compliant invoices' },
-              { type: 'receipt', title: 'Receipt Scanner', desc: 'OCR expense capture' },
-              { type: 'calculator', title: 'VAT Calculator', desc: 'Instant calculations' },
-              { type: 'returns', title: 'VAT Returns', desc: 'Quarterly filing prep' },
-              { type: 'expenses', title: 'Expense Tracker', desc: 'Categorized expenses' }
-            ].map((screen, i) => (
-              <motion.div
-                key={i}
-                className="flex-shrink-0 w-[420px] group cursor-pointer"
-                whileHover={{ scale: 1.03, y: -8, transition: { duration: 0.3 } }}
-              >
-                <div className="relative">
-                  <div className="absolute -inset-2 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="relative bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden group-hover:shadow-2xl transition-shadow duration-300">
-                    <ProductScreenshot type={screen.type as any} className="border-0 rounded-none shadow-none h-80" />
-                    <div className="p-4 bg-gradient-to-br from-gray-50 to-white border-t border-gray-200">
-                      <h3 className="font-bold text-gray-900 mb-1">{screen.title}</h3>
-                      <p className="text-sm text-gray-600">{screen.desc}</p>
-                    </div>
-                  </div>
+                <div>
+                  <p className="font-bold text-white text-sm">{badge.label}</p>
+                  <p className="text-xs text-blue-200">{badge.desc}</p>
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      <section className="py-20 bg-white">
+      <section className="py-32 bg-gradient-to-br from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            className="text-center mb-12"
+            className="text-center mb-20"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
             <motion.div
-              className="inline-flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold mb-4"
+              className="inline-flex items-center space-x-2 glass rounded-full px-6 py-2 text-sm font-semibold text-blue-600 mb-6"
               whileHover={{ scale: 1.05 }}
             >
-              <Play size={16} />
-              <span>Interactive Product Preview</span>
+              <Sparkles size={16} />
+              <span>Product Showcase</span>
             </motion.div>
-            <h2 className="text-3xl md:text-4xl font-bold text-[#1B4B7F] mb-3">
-              Explore Key Features
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+              See Dubai Tax Assistant
+              <br />
+              <span className="text-gradient">in Action</span>
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Click on each feature to see how Dubai Tax Assistant simplifies VAT compliance
-            </p>
-          </motion.div>
-
-          <div className="flex justify-center mb-8">
-            <div className="inline-flex bg-gray-100 rounded-xl p-1.5 space-x-2">
-              {[
-                { key: 'dashboard', label: 'VAT Dashboard', icon: BarChart3 },
-                { key: 'invoice', label: 'Invoices', icon: FileText },
-                { key: 'receipt', label: 'Receipts', icon: Camera },
-                { key: 'returns', label: 'VAT Returns', icon: Receipt }
-              ].map((tab) => (
-                <motion.button
-                  key={tab.key}
-                  onClick={() => setActiveFeature(tab.key as any)}
-                  className={`px-6 py-3 rounded-lg font-semibold text-sm flex items-center space-x-2 transition-all duration-300 ${
-                    activeFeature === tab.key
-                      ? 'bg-white text-[#1B4B7F] shadow-md'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  whileHover={{ scale: activeFeature === tab.key ? 1 : 1.05 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <tab.icon size={18} />
-                  <span>{tab.label}</span>
-                </motion.button>
-              ))}
-            </div>
-          </div>
-
-          <div className="max-w-5xl mx-auto">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeFeature}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="relative"
-              >
-                <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-3xl blur-2xl"></div>
-                <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl overflow-hidden">
-                  <div className="bg-gray-800 px-4 py-3 flex items-center space-x-2 border-b border-gray-700">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    <div className="ml-4 text-xs text-gray-400 font-mono">Dubai Tax Assistant</div>
-                  </div>
-                  <ProductScreenshot type={activeFeature} animated className="border-0 rounded-none shadow-none h-[500px]" />
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          <motion.div
-            className="text-center mt-12"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-          >
-            <p className="text-gray-600 mb-6">Ready to simplify your VAT compliance?</p>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
-              <Button size="lg" onClick={() => setCurrentPage('register')}>
-                Start Free Trial
-              </Button>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      <section id="features" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="text-4xl md:text-5xl font-bold text-[#1B4B7F] mb-4">
-              Built for Results, Not Complexity
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Everything you need to stay VAT compliant without the accounting headaches
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Real screens from the product — not mockups. Experience the simplicity.
             </p>
           </motion.div>
 
@@ -790,135 +414,116 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-32 bg-white" id="features">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-[#1B4B7F] mb-4">
-              Is This Right for You?
+            <motion.div
+              className="inline-flex items-center space-x-2 glass rounded-full px-6 py-2 text-sm font-semibold text-emerald-600 mb-6"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Play size={16} />
+              <span>Interactive Preview</span>
+            </motion.div>
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+              Explore Key Features
             </h2>
-            <p className="text-xl text-gray-600">
-              Honest about who we serve best
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Click each tab to see how Dubai Tax Assistant simplifies VAT compliance
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-8">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <Card className="border-2 border-green-200 hover:border-green-400 transition-colors hover:shadow-green-200/50 hover:shadow-xl">
-                <h3 className="text-2xl font-bold text-green-600 mb-6 flex items-center">
-                  <CheckCircle className="mr-3" size={28} />
-                  Perfect For
-                </h3>
-                <ul className="space-y-4">
-                  {perfectFor.map((item, index) => {
-                    const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.5 });
-                    return (
-                      <motion.li
-                        key={index}
-                        ref={ref}
-                        className="flex items-start space-x-3"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={inView ? { opacity: 1, x: 0 } : {}}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <motion.div
-                          initial={{ scale: 0 }}
-                          animate={inView ? { scale: 1 } : {}}
-                          transition={{ delay: index * 0.1 + 0.2, type: "spring" }}
-                        >
-                          <Check className="text-green-600 flex-shrink-0 mt-1" size={20} />
-                        </motion.div>
-                        <span className="text-gray-700 font-medium">{item}</span>
-                      </motion.li>
-                    );
-                  })}
-                </ul>
-              </Card>
-            </motion.div>
+          <div className="flex justify-center mb-12">
+            <div className="inline-flex glass rounded-2xl p-2 space-x-2">
+              {[
+                { key: 'dashboard', label: 'VAT Dashboard', icon: BarChart3 },
+                { key: 'invoice', label: 'Invoices', icon: FileText },
+                { key: 'receipt', label: 'Receipts', icon: Camera },
+                { key: 'returns', label: 'VAT Returns', icon: Receipt }
+              ].map((tab) => (
+                <motion.button
+                  key={tab.key}
+                  onClick={() => setActiveFeature(tab.key as any)}
+                  className={`px-8 py-4 rounded-xl font-semibold text-base flex items-center space-x-3 transition-all duration-300 ${
+                    activeFeature === tab.key
+                      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-xl glow'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                  whileHover={{ scale: activeFeature === tab.key ? 1 : 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <tab.icon size={20} />
+                  <span>{tab.label}</span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-            >
-              <Card className="border-2 border-red-200 hover:border-red-400 transition-colors hover:shadow-red-200/50 hover:shadow-xl">
-                <h3 className="text-2xl font-bold text-red-600 mb-6 flex items-center">
-                  <X className="mr-3" size={28} />
-                  Not Ideal For
-                </h3>
-                <ul className="space-y-4">
-                  {notIdealFor.map((item, index) => {
-                    const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.5 });
-                    return (
-                      <motion.li
-                        key={index}
-                        ref={ref}
-                        className="flex items-start space-x-3"
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={inView ? { opacity: 1, x: 0 } : {}}
-                        transition={{ delay: index * 0.1 }}
-                      >
-                        <motion.div
-                          initial={{ scale: 0, rotate: 0 }}
-                          animate={inView ? { scale: 1, rotate: 90 } : {}}
-                          transition={{ delay: index * 0.1 + 0.2, type: "spring" }}
-                        >
-                          <X className="text-red-600 flex-shrink-0 mt-1" size={20} />
-                        </motion.div>
-                        <span className="text-gray-700 font-medium">{item}</span>
-                      </motion.li>
-                    );
-                  })}
-                </ul>
-              </Card>
-            </motion.div>
+          <div className="max-w-6xl mx-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeFeature}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.4 }}
+                className="relative"
+              >
+                <div className="absolute -inset-8 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-cyan-500/10 rounded-3xl blur-3xl" />
+                <div className="relative glass-dark rounded-3xl shadow-2xl overflow-hidden">
+                  <div className="bg-gray-800 px-6 py-4 flex items-center space-x-3 border-b border-gray-700">
+                    <div className="w-3 h-3 rounded-full bg-red-500" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                    <div className="ml-4 text-sm text-gray-400 font-mono">Dubai Tax Assistant • {activeFeature}</div>
+                  </div>
+                  <ProductScreenshot type={activeFeature} animated className="border-0 rounded-none shadow-none h-[600px]" />
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </section>
 
-      <section className="py-20 bg-white">
+      <section className="py-32 bg-gradient-to-br from-gray-50 to-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            className="text-center mb-16"
+            className="text-center mb-20"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
             <motion.div
-              className="inline-flex items-center space-x-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-4"
+              className="inline-flex items-center space-x-2 glass rounded-full px-6 py-2 text-sm font-semibold text-blue-600 mb-6"
               whileHover={{ scale: 1.05 }}
             >
               <Award size={18} />
               <span>Best for Small Businesses</span>
             </motion.div>
-            <h2 className="text-4xl md:text-5xl font-bold text-[#1B4B7F] mb-4">
-              Dubai Tax Assistant vs Traditional Accounting Software
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+              Dubai Tax Assistant vs
+              <br />
+              <span className="text-gray-500">Traditional Accounting Software</span>
             </h2>
             <p className="text-xl text-gray-600">
               Why small businesses choose us over Zoho & QuickBooks
             </p>
           </motion.div>
 
-          <Card className="overflow-hidden shadow-xl">
+          <div className="glass rounded-3xl overflow-hidden shadow-2xl">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-gray-200">
-                    <th className="text-left py-5 px-6 text-gray-700 font-bold">Feature</th>
-                    <th className="text-center py-5 px-6 text-gray-700 font-bold">Zoho / QuickBooks</th>
-                    <th className="text-center py-5 px-6 bg-gradient-to-r from-blue-100 to-blue-200 text-[#1B4B7F] font-bold relative">
+                    <th className="text-left py-6 px-8 text-gray-700 font-bold text-lg">Feature</th>
+                    <th className="text-center py-6 px-8 text-gray-700 font-bold text-lg">Zoho / QuickBooks</th>
+                    <th className="text-center py-6 px-8 bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-900 font-bold text-lg relative">
                       <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-[#C5A572]/10 to-blue-500/10"
+                        className="absolute inset-0 bg-gradient-to-r from-blue-200/50 to-cyan-200/50"
                         animate={{
                           opacity: [0.3, 0.5, 0.3],
                         }}
@@ -929,7 +534,7 @@ export const LandingPage: React.FC = () => {
                         }}
                       />
                       <div className="flex items-center justify-center space-x-2 relative z-10">
-                        <span className="text-lg">Dubai Tax Assistant</span>
+                        <span>Dubai Tax Assistant</span>
                         <motion.div
                           animate={{
                             rotate: [0, 10, -10, 0],
@@ -940,17 +545,9 @@ export const LandingPage: React.FC = () => {
                             ease: "easeInOut"
                           }}
                         >
-                          <Crown size={20} className="text-[#C5A572]" />
+                          <Crown size={22} className="text-amber-500" />
                         </motion.div>
                       </div>
-                      <motion.div
-                        className="mt-1 text-xs font-semibold bg-green-500/20 border border-green-500/30 rounded-full px-3 py-0.5 inline-block text-green-700"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ delay: 0.3, type: "spring" }}
-                      >
-                        Best for Small Business
-                      </motion.div>
                     </th>
                   </tr>
                 </thead>
@@ -961,29 +558,31 @@ export const LandingPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
-          </Card>
+          </div>
         </div>
       </section>
 
-      <section className="py-20 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+      <section className="py-32 bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 text-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            className="text-center mb-12"
+            className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
             <motion.div
-              className="inline-flex items-center space-x-2 bg-red-500/20 border border-red-500/30 text-red-300 px-4 py-2 rounded-full text-sm font-semibold mb-4"
+              className="inline-flex items-center space-x-2 bg-red-500/20 border border-red-500/30 text-red-300 rounded-full px-6 py-2 text-sm font-semibold mb-6"
               whileHover={{ scale: 1.05 }}
             >
               <Play size={16} />
               <span>Product Demo</span>
             </motion.div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">
-              Watch How VAT Becomes Simple
+            <h2 className="text-5xl md:text-6xl font-bold mb-6">
+              Watch How VAT
+              <br />
+              <span className="text-gradient-gold">Becomes Simple</span>
             </h2>
-            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
               30-second walkthrough of the platform — see why UAE businesses choose us
             </p>
           </motion.div>
@@ -996,53 +595,44 @@ export const LandingPage: React.FC = () => {
             transition={{ duration: 0.5 }}
             whileHover={{ scale: 1.02 }}
           >
-            <div className="absolute -inset-4 bg-gradient-to-r from-[#C5A572]/30 to-blue-500/30 rounded-3xl blur-2xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
-            <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl overflow-hidden shadow-2xl border border-gray-700">
-              <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute -inset-6 bg-gradient-to-r from-blue-600/30 to-cyan-600/30 rounded-3xl blur-3xl opacity-50 group-hover:opacity-75 transition-opacity" />
+            <div className="relative glass-dark rounded-3xl overflow-hidden shadow-2xl border border-white/10">
+              <div className="absolute inset-0 flex items-center justify-center z-10">
                 <motion.div
-                  className="w-24 h-24 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/30 group-hover:bg-white/20 transition-all"
-                  whileHover={{ scale: 1.1 }}
+                  className="w-28 h-28 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/30 group-hover:bg-white/20 transition-all shadow-2xl"
+                  whileHover={{ scale: 1.15 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Play size={40} className="text-white ml-2" />
+                  <Play size={44} className="text-white ml-2" />
                 </motion.div>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1B4B7F]/20 to-transparent"></div>
-              <ProductScreenshot type="dashboard" className="opacity-60 group-hover:opacity-80 transition-opacity border-0 rounded-none shadow-none h-full" />
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-transparent" />
+              <ProductScreenshot type="dashboard" className="opacity-60 group-hover:opacity-80 transition-opacity border-0 rounded-none shadow-none h-[500px]" />
             </div>
           </motion.div>
-
-          <motion.p
-            className="text-center text-gray-400 mt-6 text-sm"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-          >
-            See real features, real interface, real simplicity ⚡
-          </motion.p>
         </div>
       </section>
 
-      <section id="testimonials" className="py-20 bg-gradient-to-br from-[#1B4B7F] to-[#153d6b] text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-64 h-64 bg-white rounded-full filter blur-3xl"></div>
-          <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#C5A572] rounded-full filter blur-3xl"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      <section id="testimonials" className="py-32 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            className="text-center mb-16"
+            className="text-center mb-20"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
-              Trusted by UAE Business Owners
+            <motion.div
+              className="inline-flex items-center space-x-2 glass rounded-full px-6 py-2 text-sm font-semibold text-amber-600 mb-6"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Star size={16} className="fill-amber-600" />
+              <span>Trusted by UAE Business Owners</span>
+            </motion.div>
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+              Real Reviews from
+              <br />
+              <span className="text-gradient">Real Customers</span>
             </h2>
-            <p className="text-xl text-blue-100">
-              Real reviews from real customers
-            </p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -1052,67 +642,50 @@ export const LandingPage: React.FC = () => {
                 <motion.div
                   key={index}
                   ref={ref}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: 40 }}
                   animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ delay: index * 0.2 }}
+                  transition={{ delay: index * 0.15, duration: 0.6 }}
+                  className="group"
                 >
-                  <Card className="bg-white/10 backdrop-blur-lg border-white/20 hover:bg-white/15 hover:scale-105 transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <motion.div
-                          className="w-14 h-14 bg-gradient-to-br from-[#C5A572] to-[#b89960] rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg"
-                          whileHover={{ scale: 1.1, rotate: 5 }}
-                        >
+                  <div className="card-premium h-full">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-white font-bold text-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
                           {testimonial.avatar}
-                        </motion.div>
+                        </div>
                         <div>
                           <div className="flex items-center space-x-2">
-                            <p className="font-bold text-white">{testimonial.name}</p>
+                            <p className="font-bold text-gray-900 text-lg">{testimonial.name}</p>
                             {testimonial.verified && (
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={inView ? { scale: 1 } : {}}
-                                transition={{ delay: index * 0.2 + 0.3 }}
-                              >
-                                <CheckCircle size={16} className="text-green-400" />
-                              </motion.div>
+                              <CheckCircle size={18} className="text-emerald-500" />
                             )}
                           </div>
-                          <p className="text-sm text-blue-200">{testimonial.role}</p>
+                          <p className="text-sm text-gray-600">{testimonial.role}</p>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex space-x-0.5">
+
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex space-x-1">
                         {[...Array(testimonial.rating)].map((_, i) => (
-                          <motion.div
-                            key={i}
-                            initial={{ opacity: 0, scale: 0 }}
-                            animate={inView ? { opacity: 1, scale: 1 } : {}}
-                            transition={{ delay: index * 0.2 + i * 0.08 }}
-                          >
-                            <Star size={16} className="fill-[#C5A572] text-[#C5A572]" />
-                          </motion.div>
+                          <Star key={i} size={18} className="fill-amber-500 text-amber-500" />
                         ))}
                       </div>
-                      <div className="flex items-center space-x-1 text-xs text-blue-200">
+                      <div className="flex items-center space-x-1 text-xs text-gray-500">
                         <span>🇦🇪</span>
                         <span>{testimonial.location}</span>
                       </div>
                     </div>
-                    <p className="text-blue-100 italic leading-relaxed mb-3">"{testimonial.text}"</p>
-                    {testimonial.verified && (
-                      <motion.div
-                        className="inline-flex items-center space-x-1 bg-green-500/20 border border-green-400/30 rounded-full px-3 py-1 text-xs text-green-300 font-medium"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={inView ? { opacity: 1, x: 0 } : {}}
-                        transition={{ delay: index * 0.2 + 0.5 }}
-                      >
-                        <CheckCircle size={12} />
-                        <span>Verified UAE Business</span>
-                      </motion.div>
-                    )}
-                  </Card>
+
+                    <p className="text-gray-700 leading-relaxed mb-6 italic">
+                      "{testimonial.text}"
+                    </p>
+
+                    <div className="inline-flex items-center space-x-2 bg-emerald-50 border border-emerald-200 rounded-full px-4 py-2 text-sm text-emerald-700 font-semibold">
+                      <TrendingUp size={14} />
+                      <span>{testimonial.metric}</span>
+                    </div>
+                  </div>
                 </motion.div>
               );
             })}
@@ -1120,7 +693,7 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      <section id="pricing" className="py-20 bg-white">
+      <section id="pricing" className="py-32 bg-gradient-to-br from-gray-50 to-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             className="text-center mb-16"
@@ -1128,220 +701,191 @@ export const LandingPage: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-[#1B4B7F] mb-4">
+            <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
               Simple, Transparent Pricing
             </h2>
-            <p className="text-xl text-gray-600 mb-4">
+            <p className="text-xl text-gray-600 mb-8">
               Start free. Upgrade when you're ready.
             </p>
-            <p className="text-sm text-gray-500">Cancel anytime • No hidden fees • No credit card required</p>
+
+            <div className="inline-flex glass rounded-2xl p-2">
+              <button
+                onClick={() => setPricingToggle('monthly')}
+                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                  pricingToggle === 'monthly'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                onClick={() => setPricingToggle('annual')}
+                className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center space-x-2 ${
+                  pricingToggle === 'annual'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <span>Annual</span>
+                <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">Save 20%</span>
+              </button>
+            </div>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              whileHover={{ y: -10, transition: { duration: 0.3 } }}
+              whileHover={{ y: -8 }}
+              className="relative"
             >
-              <Card className="border-2 border-gray-200 hover:border-gray-300 hover:shadow-xl transition-all duration-300 h-full">
-                <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Free</h3>
-                  <div className="text-5xl font-bold bg-gradient-to-br from-[#1B4B7F] to-blue-600 bg-clip-text text-transparent mb-2">AED 0</div>
-                  <p className="text-gray-600 font-medium">Forever free</p>
-                </div>
-                <ul className="space-y-4 mb-8">
-                  {['10 invoices per month', 'Basic VAT tracking', 'Receipt scanning', 'VAT calculators'].map((feature, i) => (
-                    <motion.li
-                      key={i}
-                      className="flex items-start space-x-3"
-                      initial={{ opacity: 0, x: -10 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.2 + i * 0.08, ease: [0.25, 0.4, 0.25, 1] }}
-                    >
-                      <Check className="text-green-600 flex-shrink-0 mt-1" size={20} />
-                      <span className="text-gray-700">{feature}</span>
-                    </motion.li>
+              <div className="card-premium h-full text-center">
+                <h3 className="text-3xl font-bold text-gray-900 mb-4">Free</h3>
+                <div className="text-6xl font-bold text-gray-900 mb-2">AED 0</div>
+                <p className="text-gray-600 font-medium mb-8">14-day free trial</p>
+
+                <ul className="space-y-4 mb-10 text-left">
+                  {[
+                    'Up to 20 invoices/month',
+                    'Basic receipt scanning',
+                    'VAT calculator',
+                    'Email support',
+                    'Single business'
+                  ].map((feature, i) => (
+                    <li key={i} className="flex items-start space-x-3">
+                      <Check className="text-emerald-600 flex-shrink-0 mt-1" size={20} />
+                      <span className="text-gray-700 font-medium">{feature}</span>
+                    </li>
                   ))}
                 </ul>
-                <motion.div
-                  whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-                  whileTap={{ scale: 0.98 }}
+
+                <Button
+                  variant="secondary"
+                  className="w-full glass border-2 border-gray-200 hover:border-blue-600 transition-all"
+                  onClick={() => setCurrentPage('register')}
                 >
-                  <Button variant="secondary" className="w-full shadow-md hover:shadow-lg transition-shadow duration-300" onClick={() => setCurrentPage('register')}>
-                    Start Free
-                  </Button>
-                </motion.div>
-                <p className="text-center text-xs text-gray-500 mt-4">
-                  No credit card required
-                </p>
-              </Card>
+                  Start Free Trial
+                </Button>
+              </div>
             </motion.div>
 
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              whileHover={{ y: -10 }}
+              whileHover={{ y: -8 }}
               className="relative"
             >
-              <div className="absolute -inset-1 bg-gradient-to-r from-[#C5A572] via-blue-500 to-[#C5A572] rounded-2xl opacity-20 blur-xl group-hover:opacity-30 transition-opacity duration-500"></div>
-              <Card className="border-2 border-[#C5A572] relative hover:shadow-2xl hover:shadow-[#C5A572]/30 transition-all duration-500 bg-gradient-to-br from-white via-white to-blue-50/30">
-                <motion.div
-                  className="absolute -top-4 left-1/2 transform -translate-x-1/2"
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  <span className="bg-gradient-to-r from-[#C5A572] to-[#b89960] text-white px-5 py-1.5 rounded-full text-sm font-bold flex items-center shadow-2xl border-2 border-white">
-                    <Crown size={16} className="mr-1" />
-                    Most Popular
-                  </span>
-                </motion.div>
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-br from-[#C5A572]/8 to-blue-500/5 rounded-lg pointer-events-none"
-                  animate={{ opacity: [0.4, 0.6, 0.4] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                />
+              <motion.div
+                className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10"
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <span className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-2 rounded-full text-sm font-bold flex items-center shadow-2xl border-2 border-white">
+                  <Crown size={16} className="mr-2" />
+                  Most Popular
+                </span>
+              </motion.div>
+
+              <div className="card-premium h-full text-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-cyan-600/5 pointer-events-none" />
                 <div className="relative z-10">
-                  <div className="text-center mb-6 pt-2">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Premium</h3>
-                    <div className="text-5xl font-bold bg-gradient-to-br from-[#1B4B7F] to-blue-600 bg-clip-text text-transparent mb-2">AED 99</div>
-                    <p className="text-gray-600 font-medium">per month</p>
+                  <h3 className="text-3xl font-bold text-gray-900 mb-4">Premium</h3>
+                  <div className="text-6xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
+                    AED {pricingToggle === 'monthly' ? '99' : '79'}
                   </div>
-                  <ul className="space-y-4 mb-8">
+                  <p className="text-gray-600 font-medium mb-8">per month</p>
+
+                  <ul className="space-y-4 mb-10 text-left">
                     {[
                       'Unlimited invoices',
+                      'Advanced receipt OCR',
                       'Multi-business support',
-                      'Bank imports (coming soon)',
-                      'Advanced VAT reports',
+                      'VAT return exports',
                       'Priority support',
                       'API access'
                     ].map((feature, i) => (
-                      <motion.li
-                        key={i}
-                        className="flex items-start space-x-3"
-                        initial={{ opacity: 0, x: -10 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.3 + i * 0.08, ease: [0.25, 0.4, 0.25, 1] }}
-                      >
-                        <Check className="text-green-600 flex-shrink-0 mt-1" size={20} />
+                      <li key={i} className="flex items-start space-x-3">
+                        <Check className="text-emerald-600 flex-shrink-0 mt-1" size={20} />
                         <span className="text-gray-700 font-medium">{feature}</span>
-                      </motion.li>
+                      </li>
                     ))}
                   </ul>
-                  <motion.div
-                    whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-                    whileTap={{ scale: 0.98 }}
+
+                  <Button
+                    className="w-full btn-premium bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-2xl glow"
+                    onClick={() => setCurrentPage('register')}
                   >
-                    <Button className="w-full shadow-lg hover:shadow-xl hover:shadow-[#C5A572]/30 transition-all duration-300" onClick={() => setCurrentPage('register')}>
-                      Start 14-Day Free Trial
-                    </Button>
-                  </motion.div>
-                  <p className="text-center text-xs text-gray-500 mt-4">
-                    Cancel anytime • No hidden fees • Secure payments
-                  </p>
+                    Start Free Trial
+                  </Button>
+                  <p className="text-xs text-gray-500 mt-4">No credit card required • Cancel anytime</p>
                 </div>
-              </Card>
+              </div>
             </motion.div>
           </div>
         </div>
-      </section>
-
-      <section className="py-20 bg-gradient-to-r from-[#1B4B7F] to-[#153d6b] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-white rounded-full filter blur-3xl"></div>
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-[#C5A572] rounded-full filter blur-3xl"></div>
-        </div>
-
-        <motion.div
-          className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to Stop Stressing About VAT?
-          </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join 5,000+ UAE freelancers and small businesses who trust Dubai Tax Assistant
-          </p>
-          <motion.div
-            whileHover={{ scale: 1.05, boxShadow: "0 20px 50px rgba(255,255,255,0.3)" }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Button size="lg" variant="secondary" className="text-lg px-8 py-6 shadow-xl" onClick={() => setCurrentPage('register')}>
-              Get Started Free — No Credit Card Required
-              <ArrowRight size={22} />
-            </Button>
-          </motion.div>
-          <p className="text-blue-200 mt-6 text-sm">
-            ✓ Setup takes less than 10 minutes • ✓ Cancel anytime • ✓ No hidden fees
-          </p>
-        </motion.div>
       </section>
 
       <footer className="bg-gray-900 text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-5 gap-8 mb-12">
-            <div className="md:col-span-2">
-              <motion.div
-                className="flex items-center space-x-2 mb-4"
-                whileHover={{ scale: 1.05 }}
-              >
-                <Calculator className="text-[#C5A572]" size={32} />
+          <div className="grid md:grid-cols-4 gap-12">
+            <div>
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center">
+                  <Calculator className="text-white" size={24} />
+                </div>
                 <span className="text-xl font-bold">Dubai Tax Assistant</span>
-              </motion.div>
-              <p className="text-gray-400 mb-4 leading-relaxed">
-                Your trusted partner for UAE VAT compliance. Built by freelancers, for freelancers and small businesses.
-              </p>
-              <p className="text-sm text-gray-500">
-                support@dubaitaxassistant.com
+              </div>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                VAT compliance made simple for UAE businesses. Built by entrepreneurs, for entrepreneurs.
               </p>
             </div>
+
             <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Roadmap</a></li>
+              <h4 className="font-bold mb-4">Product</h4>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a></li>
+                <li><a href="#pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">FAQ</a></li>
               </ul>
             </div>
+
             <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
+              <h4 className="font-bold mb-4">Company</h4>
+              <ul className="space-y-2 text-sm">
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">About</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Contact</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy</a></li>
               </ul>
             </div>
+
             <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Cookie Policy</a></li>
-              </ul>
+              <h4 className="font-bold mb-4">Compliance</h4>
+              <div className="flex flex-wrap gap-2">
+                <div className="inline-flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 text-xs">
+                  <Shield size={14} />
+                  <span>FTA Compliant</span>
+                </div>
+                <div className="inline-flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 text-xs">
+                  <Lock size={14} />
+                  <span>AES-256 Encrypted</span>
+                </div>
+                <div className="inline-flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 text-xs">
+                  <span>🇦🇪</span>
+                  <span>UAE Based</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="border-t border-gray-800 pt-8">
-            <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-4 mb-8">
-              <p className="text-sm text-yellow-200 leading-relaxed">
-                <strong>UAE VAT Compliance Disclaimer:</strong> Dubai Tax Assistant is a tool to help organize your VAT records.
-                You remain responsible for the accuracy of your VAT returns and compliance with UAE Federal Tax Authority regulations.
-                This tool does not provide tax advice. Consult a licensed tax professional for specific guidance.
-              </p>
-            </div>
-
-            <div className="text-center text-gray-400 text-sm">
-              <p>&copy; 2026 Dubai Tax Assistant. All rights reserved.</p>
-              <p className="mt-2">Made with ❤️ for UAE entrepreneurs</p>
-            </div>
+          <div className="border-t border-gray-800 mt-12 pt-8 text-center">
+            <p className="text-gray-400 text-sm">
+              © 2024 Dubai Tax Assistant. Made with ❤️ for UAE entrepreneurs.
+            </p>
           </div>
         </div>
       </footer>
@@ -1353,34 +897,28 @@ export const LandingPage: React.FC = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-[#1B4B7F] via-[#1B4B7F] to-[#153d6b] shadow-2xl border-t-2 border-[#C5A572]/30"
+            className="fixed bottom-0 left-0 right-0 z-50 glass-dark border-t-2 border-blue-500/30"
           >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-center sm:text-left">
-                  <p className="text-white font-bold text-lg mb-1">
+                  <p className="text-white font-bold text-xl mb-1">
                     Ready to Simplify VAT Compliance?
                   </p>
-                  <p className="text-blue-100 text-sm">
+                  <p className="text-gray-300 text-sm">
                     Join 5,000+ UAE businesses • No credit card required
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                <div className="flex items-center gap-4">
+                  <Button
+                    size="lg"
+                    className="btn-premium bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-2xl glow whitespace-nowrap"
+                    onClick={() => setCurrentPage('register')}
                   >
-                    <Button
-                      variant="secondary"
-                      size="lg"
-                      className="bg-white text-[#1B4B7F] hover:bg-gray-100 font-bold shadow-xl whitespace-nowrap"
-                      onClick={() => setCurrentPage('register')}
-                    >
-                      Start Free — No Credit Card Required
-                    </Button>
-                  </motion.div>
+                    Start Free — No Credit Card Required
+                  </Button>
                   <motion.button
-                    className="text-white hover:text-gray-200 transition-colors p-2"
+                    className="text-gray-300 hover:text-white transition-colors p-2"
                     onClick={() => setShowStickyCTA(false)}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
@@ -1393,62 +931,6 @@ export const LandingPage: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <style>{`
-        @keyframes blob {
-          0%, 100% {
-            transform: translate(0, 0) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-        }
-        .animate-blob {
-          animation: blob 8s ease-in-out infinite;
-        }
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-        @keyframes scroll-smooth {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        .animate-scroll-smooth {
-          animation: scroll-smooth 60s linear infinite;
-          will-change: transform;
-        }
-        .animate-scroll-smooth:hover {
-          animation-play-state: paused;
-        }
-        .bg-grid-pattern {
-          background-image:
-            linear-gradient(to right, rgba(27, 75, 127, 0.08) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(27, 75, 127, 0.08) 1px, transparent 1px);
-          background-size: 40px 40px;
-        }
-
-        /* Smooth scrolling optimization */
-        * {
-          scroll-behavior: smooth;
-        }
-
-        /* Hardware acceleration for animations */
-        .animate-blob,
-        .animate-scroll-smooth {
-          transform: translateZ(0);
-          backface-visibility: hidden;
-        }
-      `}</style>
     </div>
   );
 };

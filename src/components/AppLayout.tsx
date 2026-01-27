@@ -15,6 +15,7 @@ import {
   Users
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { LanguageToggle } from './LanguageToggle';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -57,6 +58,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </div>
 
             <div className="flex items-center space-x-4">
+              <LanguageToggle />
               <button className="relative text-gray-600 hover:text-[#1B4B7F] transition-colors">
                 <Bell size={22} />
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
@@ -75,9 +77,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       </nav>
 
       <div className="pt-16 flex">
-        <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white shadow-sm transition-transform duration-300 lg:translate-x-0 ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } w-64 z-40`}>
+        <aside className={`fixed left-0 top-16 h-[calc(100vh-4rem)] bg-white shadow-sm transition-transform duration-300 lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          } w-64 z-40`}>
           <nav className="p-4 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -88,11 +89,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     setCurrentPage(item.id);
                     setMobileMenuOpen(false);
                   }}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    currentPage === item.id
-                      ? 'bg-[#1B4B7F] text-white'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${currentPage === item.id
+                    ? 'bg-[#1B4B7F] text-white'
+                    : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                 >
                   <Icon size={20} />
                   <span className="font-medium">{item.label}</span>
@@ -115,11 +115,10 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <button
                 key={item.id}
                 onClick={() => setCurrentPage(item.id)}
-                className={`flex flex-col items-center py-2 px-1 rounded-lg transition-colors ${
-                  currentPage === item.id
-                    ? 'text-[#1B4B7F] bg-blue-50'
-                    : 'text-gray-600'
-                }`}
+                className={`flex flex-col items-center py-2 px-1 rounded-lg transition-colors ${currentPage === item.id
+                  ? 'text-[#1B4B7F] bg-blue-50'
+                  : 'text-gray-600'
+                  }`}
               >
                 <Icon size={20} />
                 <span className="text-xs mt-1">{item.label}</span>

@@ -1,0 +1,155 @@
+{
+  "nav": {
+    "features": "Features",
+    "pricing": "Pricing",
+    "reviews": "Reviews",
+    "signin": "Sign in"
+  },
+  "hero": {
+    "badge": "AI-Powered VAT Compliance",
+    "title": "VAT Compliance for",
+    "title2": "UAE Businesses",
+    "titleHighlight": "Without Expensive Accounting Software",
+    "description": "Track VAT, scan receipts, generate invoices, and avoid FTA penalties — built specifically for freelancers and small businesses in the UAE.",
+    "cta": {
+      "start": "Get Started Free",
+      "demo": "Watch Live Demo"
+    }
+  },
+  "badges": {
+    "noCard": "No credit card required",
+    "trial": "14-day free trial",
+    "compliant": "FTA Compliant"
+  },
+  "trust": {
+    "trustedBy": "Trusted by 5,000+ UAE Businesses"
+  },
+  "features": {
+    "title": "Every Feature Designed for UAE Businesses",
+    "subtitle": "Purpose-built tools that understand UAE VAT compliance — not generic accounting software",
+    "items": {
+      "receipts": {
+        "title": "Instant Receipt Recognition",
+        "desc": "Snap photos of receipts and our OCR extracts all details automatically. Never manually enter a receipt again."
+      },
+      "invoices": {
+        "title": "FTA-Compliant Invoices",
+        "desc": "Generate UAE VAT invoices in seconds with automatic tax calculations and professional templates."
+      },
+      "dashboard": {
+        "title": "Real-Time VAT Dashboard",
+        "desc": "See your VAT position at a glance. Track collected vs paid, and know exactly what you owe."
+      }
+    },
+    "explore": {
+      "badge": "Interactive Preview",
+      "title": "Explore Key Features",
+      "subtitle": "Click each tab to see how Dubai Tax Assistant simplifies VAT compliance"
+    },
+    "tabs": {
+      "dashboard": "VAT Dashboard",
+      "invoices": "Invoices",
+      "receipts": "Receipts",
+      "returns": "VAT Returns"
+    }
+  },
+  "comparison": {
+    "badge": "Best for Small Businesses",
+    "title": "Dubai Tax Assistant vs",
+    "subtitle": "Traditional Accounting Software",
+    "desc": "Why small businesses choose us over Zoho & QuickBooks",
+    "headers": {
+      "feature": "Feature",
+      "others": "Zoho / QuickBooks",
+      "us": "Dubai Tax Assistant"
+    },
+    "rows": {
+      "price": "Monthly Price",
+      "focus": "UAE VAT Focus",
+      "setup": "Setup Time",
+      "ocr": "Receipt OCR",
+      "learning": "Learning Curve",
+      "support": "Customer Support"
+    },
+    "values": {
+      "generic": "Generic",
+      "built": "Built for UAE",
+      "extra": "Extra cost",
+      "included": "Included",
+      "steep": "Steep",
+      "instant": "Instant",
+      "offshore": "Offshore",
+      "local": "UAE-based"
+    }
+  },
+  "video": {
+    "badge": "Product Demo",
+    "title": "Watch How VAT",
+    "titleHighlight": "Becomes Simple",
+    "desc": "30-second walkthrough of the platform — see why UAE businesses choose us"
+  },
+  "testimonials": {
+    "badge": "Trusted by UAE Business Owners",
+    "title": "Real Reviews from",
+    "titleHighlight": "Real Customers"
+  },
+  "pricing": {
+    "title": "Simple, Transparent Pricing",
+    "subtitle": "Start free. Upgrade when you're ready.",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "save": "Save 20%",
+    "perMonth": "per month",
+    "startTrial": "Start Free Trial",
+    "noCard": "No credit card required • Cancel anytime",
+    "mostPopular": "Most Popular",
+    "free": {
+      "name": "Free",
+      "price": "AED 0",
+      "period": "14-day free trial",
+      "features": [
+        "Up to 20 invoices/month",
+        "Basic receipt scanning",
+        "VAT calculator",
+        "Email support",
+        "Single business"
+      ]
+    },
+    "premium": {
+      "name": "Premium",
+      "features": [
+        "Unlimited invoices",
+        "Advanced receipt OCR",
+        "Multi-business support",
+        "VAT return exports",
+        "Priority support",
+        "API access"
+      ]
+    }
+  },
+  "footer": {
+    "desc": "VAT compliance made simple for UAE businesses. Built by entrepreneurs, for entrepreneurs.",
+    "product": "Product",
+    "company": "Company",
+    "compliance": "Compliance",
+    "links": {
+      "features": "Features",
+      "pricing": "Pricing",
+      "faq": "FAQ",
+      "about": "About",
+      "contact": "Contact",
+      "privacy": "Privacy"
+    },
+    "badges": {
+      "fta": "FTA Compliant",
+      "encrypted": "AES-256 Encrypted",
+      "uae": "UAE Based"
+    },
+    "copyright": "© 2024 Dubai Tax Assistant. Made with ❤️ for UAE entrepreneurs."
+  },
+  "sticky": {
+    "title": "Ready to Simplify VAT Compliance?",
+    "subtitle": "Join 5,000+ UAE businesses • No credit card required",
+    "cta": "Start Free — No Credit Card Required"
+  }
+}

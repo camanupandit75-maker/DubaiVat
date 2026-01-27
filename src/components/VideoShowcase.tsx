@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Pause, Volume2, VolumeX, Maximize2 } from 'lucide-react';
 import { ProductScreenshot } from './ProductScreenshot';
@@ -6,6 +6,51 @@ import { ProductScreenshot } from './ProductScreenshot';
 export const VideoShowcase: React.FC = () => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isMuted, setIsMuted] = useState(true);
+    const [progress, setProgress] = useState(0);
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    const togglePlay = () => {
+        if (videoRef.current) {
+            if (isPlaying) {
+                videoRef.current.pause();
+            } else {
+                videoRef.current.play();
+            }
+            setIsPlaying(!isPlaying);
+        }
+    };
+
+    const toggleMute = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (videoRef.current) {
+            videoRef.current.muted = !isMuted;
+            setIsMuted(!isMuted);
+        }
+    };
+
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video) return;
+
+        const updateProgress = () => {
+            if (video.duration) {
+                setProgress((video.currentTime / video.duration) * 100);
+            }
+        };
+
+        const handleEnded = () => {
+            setIsPlaying(false);
+            setProgress(0);
+        };
+
+        video.addEventListener('timeupdate', updateProgress);
+        video.addEventListener('ended', handleEnded);
+
+        return () => {
+            video.removeEventListener('timeupdate', updateProgress);
+            video.removeEventListener('ended', handleEnded);
+        };
+    }, []);
 
     return (
         <motion.div
@@ -55,82 +100,100 @@ export const VideoShowcase: React.FC = () => {
                 </div>
 
                 {/* Video content area */}
-                <div className="relative aspect-video">
-                    <ProductScreenshot
-                        type="dashboard"
-                        className="w-full h-full object-cover border-0 rounded-none shadow-none opacity-90 group-hover:opacity-100 transition-opacity"
+                <div className="relative aspect-video bg-black">
+                    {/* Video Element */}
+                    <video
+                        ref={videoRef}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        // TODO: Replace with your actual Veo 3 generated video or product demo URL
+                        src="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+                        poster=""
+                        muted={isMuted}
+                        playsInline
+                        onClick={togglePlay}
                     />
 
-                    {/* Video overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
-
-                    {/* Play button */}
-                    <motion.div
-                        className="absolute inset-0 flex items-center justify-center"
-                        initial={{ opacity: 1 }}
-                        whileHover={{ scale: 1.05 }}
-                    >
-                        <motion.button
-                            onClick={() => setIsPlaying(!isPlaying)}
-                            className="relative"
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            {/* Ripple effect */}
-                            <motion.div
-                                className="absolute inset-0 bg-white/20 rounded-full"
-                                animate={{
-                                    scale: [1, 1.5, 1],
-                                    opacity: [0.5, 0, 0.5],
-                                }}
-                                transition={{
-                                    duration: 2,
-                                    repeat: Infinity,
-                                    ease: 'easeOut',
-                                }}
+                    {/* Placeholder Overlays (only visible when not playing) */}
+                    {!isPlaying && (
+                        <div className="absolute inset-0 pointer-events-none">
+                            <ProductScreenshot
+                                type="dashboard"
+                                className="w-full h-full object-cover opacity-60"
                             />
-                            <div className="relative w-24 h-24 bg-white/10 backdrop-blur-xl rounded-full flex items-center justify-center border-2 border-white/30 shadow-2xl group-hover:bg-white/20 transition-all">
-                                {isPlaying ? (
-                                    <Pause size={36} className="text-white" />
-                                ) : (
-                                    <Play size={36} className="text-white ml-1" />
-                                )}
-                            </div>
-                        </motion.button>
-                    </motion.div>
+                            <div className="absolute inset-0 bg-black/40" />
+                        </div>
+                    )}
 
-                    {/* Bottom controls */}
-                    <div className="absolute bottom-0 left-0 right-0 p-6">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <h3 className="text-white font-bold text-xl mb-1">See VAT Compliance in Action</h3>
-                                <p className="text-gray-300 text-sm">2:34 • Full product walkthrough</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setIsMuted(!isMuted);
-                                    }}
-                                    className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-                                >
-                                    {isMuted ? (
-                                        <VolumeX size={20} className="text-white" />
+                    {/* Controls Overlay */}
+                    <div
+                        className={`absolute inset-0 transition-opacity duration-300 ${isPlaying ? 'opacity-0 hover:opacity-100' : 'opacity-100'}`}
+                        onClick={togglePlay} // Clicking anywhere on overlay toggles play
+                    >
+                        {/* Play button centered */}
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <motion.div
+                                className="relative"
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
+                                {/* Ripple effect (only when paused) */}
+                                {!isPlaying && (
+                                    <motion.div
+                                        className="absolute inset-0 bg-white/20 rounded-full"
+                                        animate={{
+                                            scale: [1, 1.5, 1],
+                                            opacity: [0.5, 0, 0.5],
+                                        }}
+                                        transition={{
+                                            duration: 2,
+                                            repeat: Infinity,
+                                            ease: 'easeOut',
+                                        }}
+                                    />
+                                )}
+
+                                <div className={`pointer-events-auto relative w-24 h-24 backdrop-blur-xl rounded-full flex items-center justify-center border-2 border-white/30 shadow-2xl transition-all ${isPlaying ? 'bg-black/30 hover:bg-white/20' : 'bg-white/10 hover:bg-white/20'}`}>
+                                    {isPlaying ? (
+                                        <Pause size={36} className="text-white" />
                                     ) : (
-                                        <Volume2 size={20} className="text-white" />
+                                        <Play size={36} className="text-white ml-1" />
                                     )}
-                                </button>
-                            </div>
+                                </div>
+                            </motion.div>
                         </div>
 
-                        {/* Progress bar */}
-                        <div className="mt-4 h-1 bg-white/20 rounded-full overflow-hidden">
-                            <motion.div
-                                className="h-full bg-gradient-to-r from-blue-500 to-cyan-500"
-                                initial={{ width: '0%' }}
-                                animate={isPlaying ? { width: '100%' } : { width: '0%' }}
-                                transition={{ duration: 154, ease: 'linear' }}
-                            />
+                        {/* Bottom controls */}
+                        <div
+                            className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent pointer-events-auto"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-white font-bold text-xl mb-1">See VAT Compliance in Action</h3>
+                                    <p className="text-gray-300 text-sm">2:34 • Full product walkthrough</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        onClick={toggleMute}
+                                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                                    >
+                                        {isMuted ? (
+                                            <VolumeX size={20} className="text-white" />
+                                        ) : (
+                                            <Volume2 size={20} className="text-white" />
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Progress bar */}
+                            <div className="mt-4 h-1 bg-white/20 rounded-full overflow-hidden cursor-pointer">
+                                <motion.div
+                                    className="h-full bg-gradient-to-r from-blue-500 to-cyan-500"
+                                    style={{ width: `${progress}%` }}
+                                    transition={{ ease: 'linear', duration: 0.1 }} // Smooth out updates slightly
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

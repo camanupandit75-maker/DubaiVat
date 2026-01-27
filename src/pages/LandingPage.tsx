@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Receipt, FileText, Calculator, ArrowRight, CheckCircle, Users, TrendingUp, Shield, Zap, Clock, Check, X, Star, Play, BarChart3, Camera, DollarSign, Crown, Sparkles, Award } from 'lucide-react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
@@ -9,6 +9,16 @@ import { ProductScreenshot } from '../components/ProductScreenshot';
 
 export const LandingPage: React.FC = () => {
   const { setCurrentPage } = useApp();
+  const [activeFeature, setActiveFeature] = useState<'dashboard' | 'invoice' | 'receipt' | 'returns'>('dashboard');
+  const [showStickyCTA, setShowStickyCTA] = useState(false);
+
+  React.useEffect(() => {
+    const handleScroll = () => {
+      setShowStickyCTA(window.scrollY > 800);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const features = [
     {
@@ -46,25 +56,31 @@ export const LandingPage: React.FC = () => {
       name: 'Ahmed Al Mansouri',
       role: 'Freelance Consultant',
       company: 'Dubai',
+      location: 'Dubai, UAE',
       text: 'Saved me AED 12,000/year compared to QuickBooks. Perfect for UAE freelancers who need simple VAT tracking.',
       rating: 5,
-      avatar: 'A'
+      avatar: 'A',
+      verified: true
     },
     {
       name: 'Sarah Khan',
       role: 'Small Business Owner',
       company: 'Sharjah Trading LLC',
+      location: 'Sharjah, UAE',
       text: 'Setup took 10 minutes. The receipt scanner is a game-changer — I used to spend hours organizing paper receipts.',
       rating: 5,
-      avatar: 'S'
+      avatar: 'S',
+      verified: true
     },
     {
       name: 'Omar Abdullah',
       role: 'Accountant',
       company: 'Managing 15 Clients',
+      location: 'Abu Dhabi, UAE',
       text: 'I recommend this to all my small business clients. Much easier than teaching them Zoho or QuickBooks.',
       rating: 5,
-      avatar: 'O'
+      avatar: 'O',
+      verified: true
     }
   ];
 
@@ -141,26 +157,39 @@ export const LandingPage: React.FC = () => {
 
   const ComparisonRow = ({ row, index }: any) => {
     const [ref, inView] = useInView({ triggerOnce: true, threshold: 0.5 });
+    const [isHovered, setIsHovered] = useState(false);
 
     return (
       <motion.tr
         ref={ref}
         initial={{ opacity: 0, x: -20 }}
         animate={inView ? { opacity: 1, x: 0 } : {}}
-        transition={{ duration: 0.4, delay: index * 0.1 }}
-        className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+        transition={{ duration: 0.5, delay: index * 0.08, ease: [0.25, 0.4, 0.25, 1] }}
+        className="border-b border-gray-100 hover:bg-blue-50/30 transition-all duration-300"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
-        <td className="py-4 px-6 font-medium text-gray-900">{row.feature}</td>
-        <td className="py-4 px-6 text-center text-gray-600">{row.zoho}</td>
-        <td className="py-4 px-6 text-center bg-gradient-to-r from-blue-50 to-blue-100">
-          <span className="font-bold text-[#1B4B7F] inline-flex items-center justify-center">
+        <td className="py-5 px-6 font-semibold text-gray-900">{row.feature}</td>
+        <td className="py-5 px-6 text-center text-gray-600">{row.zoho}</td>
+        <td className="py-5 px-6 text-center bg-gradient-to-r from-blue-50/80 to-blue-100/80 relative">
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-blue-100 to-blue-200 opacity-0"
+            animate={{ opacity: isHovered ? 0.5 : 0 }}
+            transition={{ duration: 0.3 }}
+          />
+          <span className="font-bold text-[#1B4B7F] inline-flex items-center justify-center relative z-10">
             {row.us}
             <motion.div
-              initial={{ scale: 0 }}
-              animate={inView ? { scale: 1 } : {}}
-              transition={{ delay: index * 0.1 + 0.3, type: "spring" }}
+              initial={{ scale: 0, rotate: -180 }}
+              animate={inView ? { scale: 1, rotate: 0 } : {}}
+              transition={{
+                delay: index * 0.08 + 0.3,
+                type: "spring",
+                stiffness: 200,
+                damping: 15
+              }}
             >
-              <CheckCircle className="ml-2 text-green-600" size={18} />
+              <CheckCircle className="ml-2 text-green-600" size={20} />
             </motion.div>
           </span>
         </td>
@@ -222,21 +251,25 @@ export const LandingPage: React.FC = () => {
               </motion.div>
 
               <motion.h1
-                className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#1B4B7F] mb-6 leading-tight"
+                className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-[#1B4B7F] mb-6 leading-[1.15]"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.8 }}
               >
-                VAT Compliance for UAE Businesses —{' '}
-                <span className="relative inline-block">
-                  <span className="text-[#C5A572] relative z-10 bg-clip-text">Without Expensive Accounting Software</span>
+                <span className="block mb-2">VAT Compliance for</span>
+                <span className="block mb-2">UAE Businesses</span>
+                <span className="relative inline-block mt-3">
+                  <span className="block text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-[#C5A572] via-[#d4b878] to-[#C5A572] bg-clip-text text-transparent relative z-10">
+                    Without Expensive Accounting Software
+                  </span>
                   <motion.span
-                    className="absolute -inset-1 bg-gradient-to-r from-[#C5A572]/20 to-[#C5A572]/10 blur-lg"
+                    className="absolute -inset-2 bg-gradient-to-r from-[#C5A572]/30 via-[#d4b878]/30 to-[#C5A572]/30 blur-2xl"
                     animate={{
-                      opacity: [0.4, 0.7, 0.4],
+                      opacity: [0.5, 0.8, 0.5],
+                      scale: [1, 1.05, 1],
                     }}
                     transition={{
-                      duration: 4,
+                      duration: 3,
                       repeat: Infinity,
                       ease: "easeInOut"
                     }}
@@ -368,6 +401,70 @@ export const LandingPage: React.FC = () => {
               </motion.div>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      <section className="py-12 bg-gradient-to-br from-[#1B4B7F] to-[#153d6b] text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            className="grid md:grid-cols-4 gap-8 items-center text-center md:text-left"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              className="flex flex-col md:flex-row items-center justify-center md:justify-start space-x-3"
+              whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+            >
+              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-2 md:mb-0 backdrop-blur-sm">
+                <Shield className="text-[#C5A572]" size={24} />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">5,000+</p>
+                <p className="text-sm text-blue-100">UAE Businesses</p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="flex flex-col md:flex-row items-center justify-center md:justify-start space-x-3"
+              whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+            >
+              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-2 md:mb-0 backdrop-blur-sm">
+                <CheckCircle className="text-green-400" size={24} />
+              </div>
+              <div>
+                <p className="text-lg font-bold">FTA Compliant</p>
+                <p className="text-sm text-blue-100">100% VAT Ready</p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="flex flex-col md:flex-row items-center justify-center md:justify-start space-x-3"
+              whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+            >
+              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-2 md:mb-0 backdrop-blur-sm">
+                <span className="text-2xl">🇦🇪</span>
+              </div>
+              <div>
+                <p className="text-lg font-bold">Built for UAE</p>
+                <p className="text-sm text-blue-100">Local Business Focused</p>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="flex flex-col md:flex-row items-center justify-center md:justify-start space-x-3"
+              whileHover={{ scale: 1.05, transition: { duration: 0.2 } }}
+            >
+              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-2 md:mb-0 backdrop-blur-sm">
+                <Award className="text-[#C5A572]" size={24} />
+              </div>
+              <div>
+                <p className="text-lg font-bold">Save AED 1,000+</p>
+                <p className="text-sm text-blue-100">vs Zoho Books</p>
+              </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
@@ -578,6 +675,96 @@ export const LandingPage: React.FC = () => {
         </div>
       </section>
 
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <motion.div
+              className="inline-flex items-center space-x-2 bg-green-100 text-green-700 px-4 py-2 rounded-full text-sm font-semibold mb-4"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Play size={16} />
+              <span>Interactive Product Preview</span>
+            </motion.div>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#1B4B7F] mb-3">
+              Explore Key Features
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Click on each feature to see how Dubai Tax Assistant simplifies VAT compliance
+            </p>
+          </motion.div>
+
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex bg-gray-100 rounded-xl p-1.5 space-x-2">
+              {[
+                { key: 'dashboard', label: 'VAT Dashboard', icon: BarChart3 },
+                { key: 'invoice', label: 'Invoices', icon: FileText },
+                { key: 'receipt', label: 'Receipts', icon: Camera },
+                { key: 'returns', label: 'VAT Returns', icon: Receipt }
+              ].map((tab) => (
+                <motion.button
+                  key={tab.key}
+                  onClick={() => setActiveFeature(tab.key as any)}
+                  className={`px-6 py-3 rounded-lg font-semibold text-sm flex items-center space-x-2 transition-all duration-300 ${
+                    activeFeature === tab.key
+                      ? 'bg-white text-[#1B4B7F] shadow-md'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  whileHover={{ scale: activeFeature === tab.key ? 1 : 1.05 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <tab.icon size={18} />
+                  <span>{tab.label}</span>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
+          <div className="max-w-5xl mx-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeFeature}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="relative"
+              >
+                <div className="absolute -inset-4 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-3xl blur-2xl"></div>
+                <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl overflow-hidden">
+                  <div className="bg-gray-800 px-4 py-3 flex items-center space-x-2 border-b border-gray-700">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <div className="ml-4 text-xs text-gray-400 font-mono">Dubai Tax Assistant</div>
+                  </div>
+                  <ProductScreenshot type={activeFeature} animated className="border-0 rounded-none shadow-none h-[500px]" />
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          <motion.div
+            className="text-center mt-12"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+          >
+            <p className="text-gray-600 mb-6">Ready to simplify your VAT compliance?</p>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }}>
+              <Button size="lg" onClick={() => setCurrentPage('register')}>
+                Start Free Trial
+              </Button>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
       <section id="features" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -722,18 +909,48 @@ export const LandingPage: React.FC = () => {
             </p>
           </motion.div>
 
-          <Card className="overflow-hidden">
+          <Card className="overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b-2 border-gray-200">
-                    <th className="text-left py-4 px-6 text-gray-600 font-semibold">Feature</th>
-                    <th className="text-center py-4 px-6 text-gray-600 font-semibold">Zoho / QuickBooks</th>
-                    <th className="text-center py-4 px-6 bg-gradient-to-r from-blue-50 to-blue-100 text-[#1B4B7F] font-semibold">
-                      <div className="flex items-center justify-center space-x-2">
-                        <span>Dubai Tax Assistant</span>
-                        <Crown size={18} className="text-[#C5A572]" />
+                    <th className="text-left py-5 px-6 text-gray-700 font-bold">Feature</th>
+                    <th className="text-center py-5 px-6 text-gray-700 font-bold">Zoho / QuickBooks</th>
+                    <th className="text-center py-5 px-6 bg-gradient-to-r from-blue-100 to-blue-200 text-[#1B4B7F] font-bold relative">
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-[#C5A572]/10 to-blue-500/10"
+                        animate={{
+                          opacity: [0.3, 0.5, 0.3],
+                        }}
+                        transition={{
+                          duration: 3,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      />
+                      <div className="flex items-center justify-center space-x-2 relative z-10">
+                        <span className="text-lg">Dubai Tax Assistant</span>
+                        <motion.div
+                          animate={{
+                            rotate: [0, 10, -10, 0],
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            ease: "easeInOut"
+                          }}
+                        >
+                          <Crown size={20} className="text-[#C5A572]" />
+                        </motion.div>
                       </div>
+                      <motion.div
+                        className="mt-1 text-xs font-semibold bg-green-500/20 border border-green-500/30 rounded-full px-3 py-0.5 inline-block text-green-700"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.3, type: "spring" }}
+                      >
+                        Best for Small Business
+                      </motion.div>
                     </th>
                   </tr>
                 </thead>
@@ -745,6 +962,65 @@ export const LandingPage: React.FC = () => {
               </table>
             </div>
           </Card>
+        </div>
+      </section>
+
+      <section className="py-20 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <motion.div
+              className="inline-flex items-center space-x-2 bg-red-500/20 border border-red-500/30 text-red-300 px-4 py-2 rounded-full text-sm font-semibold mb-4"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Play size={16} />
+              <span>Product Demo</span>
+            </motion.div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-3">
+              Watch How VAT Becomes Simple
+            </h2>
+            <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+              30-second walkthrough of the platform — see why UAE businesses choose us
+            </p>
+          </motion.div>
+
+          <motion.div
+            className="relative group cursor-pointer"
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            whileHover={{ scale: 1.02 }}
+          >
+            <div className="absolute -inset-4 bg-gradient-to-r from-[#C5A572]/30 to-blue-500/30 rounded-3xl blur-2xl opacity-50 group-hover:opacity-75 transition-opacity"></div>
+            <div className="relative aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl overflow-hidden shadow-2xl border border-gray-700">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <motion.div
+                  className="w-24 h-24 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/30 group-hover:bg-white/20 transition-all"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Play size={40} className="text-white ml-2" />
+                </motion.div>
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-br from-[#1B4B7F]/20 to-transparent"></div>
+              <ProductScreenshot type="dashboard" className="opacity-60 group-hover:opacity-80 transition-opacity border-0 rounded-none shadow-none h-full" />
+            </div>
+          </motion.div>
+
+          <motion.p
+            className="text-center text-gray-400 mt-6 text-sm"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+          >
+            See real features, real interface, real simplicity ⚡
+          </motion.p>
         </div>
       </section>
 
@@ -780,33 +1056,62 @@ export const LandingPage: React.FC = () => {
                   animate={inView ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: index * 0.2 }}
                 >
-                  <Card className="bg-white/10 backdrop-blur-lg border-white/20 hover:bg-white/15 hover:scale-105 transition-all">
-                    <div className="flex items-center space-x-4 mb-4">
-                      <motion.div
-                        className="w-12 h-12 bg-[#C5A572] rounded-full flex items-center justify-center text-white font-bold text-xl"
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                      >
-                        {testimonial.avatar}
-                      </motion.div>
-                      <div>
-                        <p className="font-semibold text-white">{testimonial.name}</p>
-                        <p className="text-sm text-blue-200">{testimonial.role}</p>
+                  <Card className="bg-white/10 backdrop-blur-lg border-white/20 hover:bg-white/15 hover:scale-105 transition-all duration-300">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <motion.div
+                          className="w-14 h-14 bg-gradient-to-br from-[#C5A572] to-[#b89960] rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg"
+                          whileHover={{ scale: 1.1, rotate: 5 }}
+                        >
+                          {testimonial.avatar}
+                        </motion.div>
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <p className="font-bold text-white">{testimonial.name}</p>
+                            {testimonial.verified && (
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={inView ? { scale: 1 } : {}}
+                                transition={{ delay: index * 0.2 + 0.3 }}
+                              >
+                                <CheckCircle size={16} className="text-green-400" />
+                              </motion.div>
+                            )}
+                          </div>
+                          <p className="text-sm text-blue-200">{testimonial.role}</p>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex mb-3">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <motion.div
-                          key={i}
-                          initial={{ opacity: 0, scale: 0 }}
-                          animate={inView ? { opacity: 1, scale: 1 } : {}}
-                          transition={{ delay: index * 0.2 + i * 0.1 }}
-                        >
-                          <Star size={18} className="fill-[#C5A572] text-[#C5A572]" />
-                        </motion.div>
-                      ))}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex space-x-0.5">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <motion.div
+                            key={i}
+                            initial={{ opacity: 0, scale: 0 }}
+                            animate={inView ? { opacity: 1, scale: 1 } : {}}
+                            transition={{ delay: index * 0.2 + i * 0.08 }}
+                          >
+                            <Star size={16} className="fill-[#C5A572] text-[#C5A572]" />
+                          </motion.div>
+                        ))}
+                      </div>
+                      <div className="flex items-center space-x-1 text-xs text-blue-200">
+                        <span>🇦🇪</span>
+                        <span>{testimonial.location}</span>
+                      </div>
                     </div>
-                    <p className="text-blue-100 italic leading-relaxed">"{testimonial.text}"</p>
-                    <p className="text-sm text-blue-300 mt-3">{testimonial.company}</p>
+                    <p className="text-blue-100 italic leading-relaxed mb-3">"{testimonial.text}"</p>
+                    {testimonial.verified && (
+                      <motion.div
+                        className="inline-flex items-center space-x-1 bg-green-500/20 border border-green-400/30 rounded-full px-3 py-1 text-xs text-green-300 font-medium"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={inView ? { opacity: 1, x: 0 } : {}}
+                        transition={{ delay: index * 0.2 + 0.5 }}
+                      >
+                        <CheckCircle size={12} />
+                        <span>Verified UAE Business</span>
+                      </motion.div>
+                    )}
                   </Card>
                 </motion.div>
               );
@@ -1040,6 +1345,54 @@ export const LandingPage: React.FC = () => {
           </div>
         </div>
       </footer>
+
+      <AnimatePresence>
+        {showStickyCTA && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-[#1B4B7F] via-[#1B4B7F] to-[#153d6b] shadow-2xl border-t-2 border-[#C5A572]/30"
+          >
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-center sm:text-left">
+                  <p className="text-white font-bold text-lg mb-1">
+                    Ready to Simplify VAT Compliance?
+                  </p>
+                  <p className="text-blue-100 text-sm">
+                    Join 5,000+ UAE businesses • No credit card required
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="bg-white text-[#1B4B7F] hover:bg-gray-100 font-bold shadow-xl whitespace-nowrap"
+                      onClick={() => setCurrentPage('register')}
+                    >
+                      Start Free — No Credit Card Required
+                    </Button>
+                  </motion.div>
+                  <motion.button
+                    className="text-white hover:text-gray-200 transition-colors p-2"
+                    onClick={() => setShowStickyCTA(false)}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <X size={24} />
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style>{`
         @keyframes blob {

@@ -44,7 +44,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const isFetchingUser = useRef(false); // Prevent multiple simultaneous fetches
   const onboardingCheckedRef = useRef(false); // Track if we've already checked for onboarding
 
-  const fetchAndSetUser = async (supabaseUser: any) => {
+  const fetchAndSetUser = async (supabaseUser: any, shouldSetPage: boolean = true) => {
     // Prevent multiple simultaneous calls
     if (isFetchingUser.current) {
       console.log('Already fetching user, skipping...');
@@ -65,7 +65,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     };
     
     setUser(basicUser);
-    setCurrentPage('dashboard');
+    // Only set page to dashboard on initial sign-in, not on token refresh
+    if (shouldSetPage) {
+      setCurrentPage('dashboard');
+    }
     console.log('User set with basic info');
 
     // Then try to fetch business profile (non-blocking)
@@ -129,7 +132,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         console.log('Session retrieved:', session ? 'exists' : 'none');
         
         if (session?.user) {
-          await fetchAndSetUser(session.user);
+          // On initial load, set page to dashboard if no user was previously set
+          await fetchAndSetUser(session.user, !user);
         } else {
           console.log('No session found');
         }
@@ -152,7 +156,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         
         if (event === 'SIGNED_IN' && session?.user) {
           try {
-            await fetchAndSetUser(session.user);
+            // Only set page to dashboard on actual sign-in
+            await fetchAndSetUser(session.user, true);
           } catch (error) {
             console.error('Error in auth state change:', error);
           } finally {
@@ -169,6 +174,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           setShowOnboarding(false);
           setIsLoading(false);
           onboardingCheckedRef.current = false; // Reset on sign out
+        } else if (event === 'TOKEN_REFRESHED') {
+          // Token was refreshed - update session but DON'T redirect or reset page
+          console.log('Token refreshed - updating session without changing page');
+          if (session?.user) {
+            // Update user but don't change currentPage
+            await fetchAndSetUser(session.user, false);
+          }
+          if (mounted) {
+            setIsLoading(false);
+          }
+        } else if (event === 'USER_UPDATED' && session?.user) {
+          // User metadata updated - update user but don't change page
+          console.log('User updated - refreshing user data');
+          await fetchAndSetUser(session.user, false);
+          if (mounted) {
+            setIsLoading(false);
+          }
         } else if (event === 'INITIAL_SESSION') {
           // This event fires after initial session check
           if (mounted) {

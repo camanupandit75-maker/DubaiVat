@@ -419,47 +419,85 @@ export const validateVATEntry = async (entry: {
       )
     : null;
 
-  // If we found a match, check if selected rate matches
-  if (bestMatch && bestMatch.category) {
-    const expectedRateType = bestMatch.category.rate_type;
-    const selectedRate = entry.selectedRateType;
-
-    // Check if rates match
-    if (expectedRateType !== selectedRate) {
-      // Determine severity based on the mismatch
-      let severity: 'error' | 'warning' | 'info' = 'warning';
-      
-      // Critical errors
-      if (expectedRateType === 'exempt' && selectedRate === 'standard') {
-        severity = 'error'; // Charging VAT on exempt item
-      } else if (expectedRateType === 'standard' && selectedRate !== 'standard') {
-        severity = 'error'; // Not charging VAT when should
-      } else if (expectedRateType === 'zero-rated' && selectedRate === 'exempt') {
-        severity = 'warning'; // Both 0% but different recovery rules
-      }
-
-      const rateNames: Record<string, string> = {
-        'standard': 'Standard Rate (5%)',
-        'zero-rated': 'Zero-Rated (0%)',
-        'exempt': 'Exempt (0%)',
-      };
-
+  // ======= IMPORTANT: Handle NO MATCH case =======
+  if (!bestMatch) {
+    // No keyword match found - show info message
+    warnings.push({
+      code: 'NO_MATCH',
+      message: `"${searchText}" not found in VAT database. Please verify the rate manually. Default assumption: items without specific classification are usually Standard Rate (5%).`,
+      severity: 'info',
+    });
+    
+    // If they selected zero-rated or exempt without a match, warn them
+    if (entry.selectedRateType !== 'standard') {
       warnings.push({
-        code: 'RATE_MISMATCH',
-        message: `"${bestMatch.keyword}" matches "${bestMatch.category.name}" which should be ${rateNames[expectedRateType]}. You selected ${rateNames[selectedRate]}.`,
-        severity,
-        suggestedRate: expectedRateType,
-        suggestedCategory: bestMatch.category.name,
+        code: 'UNVERIFIED_SPECIAL_RATE',
+        message: `You selected ${entry.selectedRateType === 'zero-rated' ? 'Zero-Rated (0%)' : 'Exempt (0%)'}. Most items are Standard Rate (5%) unless specifically exempt. Please confirm this item qualifies for ${entry.selectedRateType}.`,
+        severity: 'warning',
+        suggestedRate: 'standard',
       });
+    }
+    
+    // Validate VAT calculation even if no match
+    const expectedRate = entry.selectedRateType === 'standard' ? 0.05 : 0;
+    const expectedVAT = entry.amount * expectedRate;
+    const tolerance = 1;
 
-      // Add common mistake info if available
-      if (bestMatch.category.common_mistakes) {
-        warnings.push({
-          code: 'COMMON_MISTAKE',
-          message: `Common mistake: ${bestMatch.category.common_mistakes}`,
-          severity: 'info',
-        });
-      }
+    if (Math.abs(entry.vatAmount - expectedVAT) > tolerance) {
+      const ratePercent = entry.selectedRateType === 'standard' ? '5%' : '0%';
+      warnings.push({
+        code: 'VAT_CALCULATION_ERROR',
+        message: `VAT amount (AED ${entry.vatAmount.toFixed(2)}) doesn't match ${ratePercent} of AED ${entry.amount.toFixed(2)}.`,
+        severity: 'error',
+      });
+    }
+    
+    return {
+      isValid: entry.selectedRateType === 'standard' && warnings.every(w => w.severity !== 'error'), // Only "valid" if standard rate selected and no calculation errors
+      warnings,
+      suggestion: null,
+    };
+  }
+
+  // ======= MATCH FOUND - Check if rate is correct =======
+  const expectedRateType = bestMatch.category.rate_type;
+  const selectedRate = entry.selectedRateType;
+
+  // Check if rates match
+  if (expectedRateType !== selectedRate) {
+    // Determine severity based on the mismatch
+    let severity: 'error' | 'warning' | 'info' = 'warning';
+    
+    // Critical errors
+    if (expectedRateType === 'exempt' && selectedRate === 'standard') {
+      severity = 'error'; // Charging VAT on exempt item
+    } else if (expectedRateType === 'standard' && selectedRate !== 'standard') {
+      severity = 'error'; // Not charging VAT when should
+    } else if (expectedRateType === 'zero-rated' && selectedRate === 'exempt') {
+      severity = 'warning'; // Both 0% but different recovery rules
+    }
+
+    const rateNames: Record<string, string> = {
+      'standard': 'Standard Rate (5%)',
+      'zero-rated': 'Zero-Rated (0%)',
+      'exempt': 'Exempt (0%)',
+    };
+
+    warnings.push({
+      code: 'RATE_MISMATCH',
+      message: `"${bestMatch.keyword}" matches "${bestMatch.category.name}" which should be ${rateNames[expectedRateType]}. You selected ${rateNames[selectedRate]}.`,
+      severity,
+      suggestedRate: expectedRateType,
+      suggestedCategory: bestMatch.category.name,
+    });
+
+    // Add common mistake info if available
+    if (bestMatch.category.common_mistakes) {
+      warnings.push({
+        code: 'COMMON_MISTAKE',
+        message: `Common mistake: ${bestMatch.category.common_mistakes}`,
+        severity: 'info',
+      });
     }
   }
 

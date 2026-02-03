@@ -76,6 +76,46 @@ export const updateBusinessProfile = async (id: string, updates: any) => {
   return { data, error };
 };
 
+// ============ INDIVIDUAL PROFILE ============
+export const getIndividualProfile = async (userId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('individual_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+    
+    if (error && error.code !== 'PGRST116') {
+      console.error('Error fetching individual profile:', error);
+      return { data: null, error };
+    }
+    
+    return { data: data || null, error: null };
+  } catch (error) {
+    console.error('Exception fetching individual profile:', error);
+    return { data: null, error };
+  }
+};
+
+export const createIndividualProfile = async (profile: any) => {
+  const { data, error } = await supabase
+    .from('individual_profiles')
+    .insert(profile)
+    .select()
+    .single();
+  return { data, error };
+};
+
+export const updateIndividualProfile = async (id: string, updates: any) => {
+  const { data, error } = await supabase
+    .from('individual_profiles')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  return { data, error };
+};
+
 // ============ INVOICES ============
 export const getInvoices = async (businessId: string) => {
   const { data, error } = await supabase

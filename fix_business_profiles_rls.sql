@@ -39,3 +39,4 @@ FOR DELETE
 USING (auth.uid() = user_id);
 
 
+

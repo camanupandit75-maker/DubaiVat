@@ -18,9 +18,10 @@ import { ProfessionalDirectory } from './pages/ProfessionalDirectory';
 import { VATRateFinder } from './pages/VATRateFinder';
 import { IndividualDashboard } from './pages/IndividualDashboard';
 import { TouristRefund } from './pages/TouristRefund';
+import { IndividualProfileSetup } from './pages/IndividualProfileSetup';
 
 function AppContent() {
-  const { currentPage, user, showOnboarding, setShowOnboarding, isLoading, refreshBusinessProfile } = useApp();
+  const { currentPage, user, showOnboarding, setShowOnboarding, showIndividualProfileSetup, setShowIndividualProfileSetup, isLoading, refreshBusinessProfile, refreshIndividualProfile } = useApp();
   const [forceShow, setForceShow] = useState(false);
 
   // Safety timeout - show app after 12 seconds even if still loading
@@ -92,20 +93,40 @@ function AppContent() {
     return renderPage();
   }
 
-  return (
-    <>
-      <AppLayout>{renderPage()}</AppLayout>
-      {/* Only show onboarding if user exists but has no business profile */}
-      <OnboardingModal
-        isOpen={showOnboarding && !!user && !user.businessProfile}
+  // Show individual profile setup for individual users without profile
+  if (user.accountType === 'individual' && showIndividualProfileSetup && !user.individualProfile) {
+    return (
+      <IndividualProfileSetup
+        user={user}
         onComplete={async () => {
-          // Set showOnboarding to false immediately to close modal
-          setShowOnboarding(false);
-          // Optionally refresh business profile (but don't wait for it)
-          refreshBusinessProfile().catch(console.error);
+          setShowIndividualProfileSetup(false);
+          // Refresh individual profile
+          if (refreshIndividualProfile) {
+            await refreshIndividualProfile();
+          }
         }}
       />
-    </>
+    );
+  }
+
+  // Show business onboarding for business users without profile
+  if (user.accountType === 'business' && showOnboarding && !user.businessProfile) {
+    return (
+      <>
+        <AppLayout>{renderPage()}</AppLayout>
+        <OnboardingModal
+          isOpen={true}
+          onComplete={async () => {
+            setShowOnboarding(false);
+            refreshBusinessProfile().catch(console.error);
+          }}
+        />
+      </>
+    );
+  }
+
+  return (
+    <AppLayout>{renderPage()}</AppLayout>
   );
 }
 

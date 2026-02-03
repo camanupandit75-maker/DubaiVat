@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
-import { supabase, getBusinessProfile, signOut as supabaseSignOut } from '../lib/supabase';
+import { supabase, getBusinessProfile, getIndividualProfile, signOut as supabaseSignOut } from '../lib/supabase';
 
 interface BusinessProfile {
   id: string;
@@ -13,11 +13,23 @@ interface BusinessProfile {
   vat_period: 'monthly' | 'quarterly';
 }
 
+interface IndividualProfile {
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string | null;
+  residency_status: 'resident' | 'tourist' | 'visitor' | null;
+  nationality: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 interface AppUser {
   id: string;
   email: string;
   fullName: string;
   businessProfile: BusinessProfile | null;
+  individualProfile: IndividualProfile | null;
   accountType?: 'business' | 'individual';
 }
 
@@ -28,11 +40,14 @@ interface AppContextType {
   setCurrentPage: (page: string) => void;
   showOnboarding: boolean;
   setShowOnboarding: (show: boolean) => void;
+  showIndividualProfileSetup: boolean;
+  setShowIndividualProfileSetup: (show: boolean) => void;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string, fullName?: string, accountType?: 'business' | 'individual', residencyStatus?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshBusinessProfile: () => Promise<void>;
+  refreshIndividualProfile: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -41,9 +56,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [user, setUser] = useState<AppUser | null>(null);
   const [currentPage, setCurrentPage] = useState('landing');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showIndividualProfileSetup, setShowIndividualProfileSetup] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const isFetchingUser = useRef(false); // Prevent multiple simultaneous fetches
   const onboardingCheckedRef = useRef(false); // Track if we've already checked for onboarding
+  const individualProfileCheckedRef = useRef(false); // Track if we've already checked for individual profile
 
   const fetchAndSetUser = async (supabaseUser: any, shouldSetPage: boolean = true) => {
     // Prevent multiple simultaneous calls
@@ -65,6 +82,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       email: supabaseUser.email || '',
       fullName,
       businessProfile: null,
+      individualProfile: null,
       accountType,
     };
     
@@ -75,43 +93,71 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     console.log('User set with basic info');
 
-    // Then try to fetch business profile (non-blocking)
+    // Fetch appropriate profile based on account type
     try {
-      console.log('Fetching business profile for user:', supabaseUser.id);
-      
-      // Use a simpler approach - just call it directly with a timeout wrapper
-      const profileResult = await Promise.race([
-        getBusinessProfile(supabaseUser.id),
-        new Promise((resolve) => setTimeout(() => resolve({ data: null, error: null }), 5000))
-      ]) as any;
-      
-      const { data: businessProfile } = profileResult || { data: null };
+      if (accountType === 'individual') {
+        console.log('Fetching individual profile for user:', supabaseUser.id);
+        
+        const profileResult = await Promise.race([
+          getIndividualProfile(supabaseUser.id),
+          new Promise((resolve) => setTimeout(() => resolve({ data: null, error: null }), 5000))
+        ]) as any;
+        
+        const { data: individualProfile } = profileResult || { data: null };
 
-      if (businessProfile) {
-        setUser({
-          ...basicUser,
-          businessProfile,
-        });
-        setShowOnboarding(false); // Ensure onboarding is closed if profile exists
-        onboardingCheckedRef.current = true; // Mark as checked
-        console.log('Business profile loaded - onboarding closed');
-      } else {
-        // Only show onboarding if we haven't already checked and closed it
-        // But also check if user explicitly skipped it
-        if (!onboardingCheckedRef.current) {
-          setShowOnboarding(true);
-          console.log('No business profile found - showing onboarding');
+        if (individualProfile) {
+          setUser({
+            ...basicUser,
+            individualProfile,
+          });
+          setShowIndividualProfileSetup(false);
+          individualProfileCheckedRef.current = true;
+          console.log('Individual profile loaded - setup closed');
         } else {
-          // Already checked or skipped, don't show again
+          // Check if profile is already complete in metadata
+          const profileComplete = supabaseUser.user_metadata?.profile_complete;
+          if (!profileComplete && !individualProfileCheckedRef.current) {
+            setShowIndividualProfileSetup(true);
+            console.log('No individual profile found - showing setup');
+          } else {
+            setShowIndividualProfileSetup(false);
+            console.log('Individual profile already checked/skipped - not showing again');
+          }
+        }
+      } else {
+        // Business account - fetch business profile
+        console.log('Fetching business profile for user:', supabaseUser.id);
+        
+        const profileResult = await Promise.race([
+          getBusinessProfile(supabaseUser.id),
+          new Promise((resolve) => setTimeout(() => resolve({ data: null, error: null }), 5000))
+        ]) as any;
+        
+        const { data: businessProfile } = profileResult || { data: null };
+
+        if (businessProfile) {
+          setUser({
+            ...basicUser,
+            businessProfile,
+          });
           setShowOnboarding(false);
-          console.log('Onboarding already checked/skipped - not showing again');
+          onboardingCheckedRef.current = true;
+          console.log('Business profile loaded - onboarding closed');
+        } else {
+          if (!onboardingCheckedRef.current) {
+            setShowOnboarding(true);
+            console.log('No business profile found - showing onboarding');
+          } else {
+            setShowOnboarding(false);
+            console.log('Onboarding already checked/skipped - not showing again');
+          }
         }
       }
     } catch (error) {
-      console.error('Error fetching business profile (non-critical):', error);
-      // On error, don't show onboarding - let the user continue using the app
-      // They can manually complete profile if needed
+      console.error('Error fetching profile (non-critical):', error);
+      // On error, don't show setup - let the user continue using the app
       setShowOnboarding(false);
+      setShowIndividualProfileSetup(false);
     } finally {
       isFetchingUser.current = false;
     }
@@ -176,8 +222,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           setUser(null);
           setCurrentPage('landing');
           setShowOnboarding(false);
+          setShowIndividualProfileSetup(false);
           setIsLoading(false);
           onboardingCheckedRef.current = false; // Reset on sign out
+          individualProfileCheckedRef.current = false; // Reset on sign out
         } else if (event === 'TOKEN_REFRESHED') {
           // Token was refreshed - update session but DON'T redirect or reset page
           console.log('Token refreshed - updating session without changing page');
@@ -245,9 +293,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         accountType: userAccountType,
       });
       
-      // Only show onboarding for business accounts
+      // Show appropriate profile setup based on account type
       if (userAccountType === 'business') {
         setShowOnboarding(true);
+      } else {
+        setShowIndividualProfileSetup(true);
       }
       setCurrentPage('dashboard');
     }
@@ -277,12 +327,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const refreshIndividualProfile = async () => {
+    if (!user?.id) return;
+    const { data: individualProfile } = await getIndividualProfile(user.id);
+    if (individualProfile) {
+      setUser(prevUser => prevUser ? { ...prevUser, individualProfile } : null);
+      setShowIndividualProfileSetup(false); // Close setup if profile is successfully refreshed
+      individualProfileCheckedRef.current = true; // Mark as checked
+      console.log('Individual profile refreshed - setup closed');
+    } else {
+      console.log('No individual profile found on refresh');
+    }
+  };
+
   return (
     <AppContext.Provider value={{
       user, setUser, currentPage, setCurrentPage,
-      showOnboarding, setShowOnboarding, isLoading,
+      showOnboarding, setShowOnboarding, 
+      showIndividualProfileSetup, setShowIndividualProfileSetup,
+      isLoading,
       signIn: handleSignIn, signUp: handleSignUp, signOut: handleSignOut,
-      refreshBusinessProfile,
+      refreshBusinessProfile, refreshIndividualProfile,
     }}>
       {children}
     </AppContext.Provider>

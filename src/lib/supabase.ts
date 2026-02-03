@@ -540,3 +540,111 @@ export const getVATCategoryByCode = async (code: string) => {
   return { data, error };
 };
 
+// ============ EDUCATION CENTER HELPERS ============
+
+// Get all education categories with article counts
+export const getEducationCategories = async () => {
+  const { data: categories, error } = await supabase
+    .from('education_categories')
+    .select('*')
+    .eq('is_active', true)
+    .order('display_order');
+  
+  // Get article counts for each category
+  if (categories) {
+    const categoriesWithCounts = await Promise.all(
+      categories.map(async (category) => {
+        const { count } = await supabase
+          .from('education_articles')
+          .select('*', { count: 'exact', head: true })
+          .eq('category_id', category.id)
+          .eq('is_active', true);
+        
+        return {
+          ...category,
+          article_count: count || 0,
+        };
+      })
+    );
+    
+    return { data: categoriesWithCounts, error: null };
+  }
+  
+  return { data: categories, error };
+};
+
+// Get articles by category
+export const getArticlesByCategory = async (categoryCode: string) => {
+  const { data, error } = await supabase
+    .from('education_articles')
+    .select(`
+      *,
+      education_categories (*)
+    `)
+    .eq('education_categories.code', categoryCode)
+    .eq('is_active', true)
+    .order('display_order');
+  
+  return { data, error };
+};
+
+// Get single article by slug
+export const getArticleBySlug = async (slug: string) => {
+  const { data, error } = await supabase
+    .from('education_articles')
+    .select(`
+      *,
+      education_categories (*)
+    `)
+    .eq('slug', slug)
+    .single();
+  
+  return { data, error };
+};
+
+// Get featured articles
+export const getFeaturedArticles = async () => {
+  const { data, error } = await supabase
+    .from('education_articles')
+    .select(`
+      *,
+      education_categories (*)
+    `)
+    .eq('is_featured', true)
+    .eq('is_active', true)
+    .order('display_order')
+    .limit(5);
+  
+  return { data, error };
+};
+
+// Search articles
+export const searchEducationArticles = async (searchTerm: string) => {
+  const { data, error } = await supabase
+    .from('education_articles')
+    .select(`
+      *,
+      education_categories (*)
+    `)
+    .eq('is_active', true)
+    .or(`title.ilike.%${searchTerm}%,summary.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`)
+    .order('display_order');
+  
+  return { data, error };
+};
+
+// Get all articles for a category by category ID
+export const getArticlesByCategoryId = async (categoryId: string) => {
+  const { data, error } = await supabase
+    .from('education_articles')
+    .select(`
+      *,
+      education_categories (*)
+    `)
+    .eq('category_id', categoryId)
+    .eq('is_active', true)
+    .order('display_order');
+  
+  return { data, error };
+};
+

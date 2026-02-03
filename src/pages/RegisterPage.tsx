@@ -57,7 +57,13 @@ export const RegisterPage: React.FC = () => {
     setLoading(true);
     setError('');
 
-    const { error: signUpError } = await signUp(formData.email, formData.password, formData.name);
+    const { error: signUpError } = await signUp(
+      formData.email, 
+      formData.password, 
+      formData.name,
+      accountType,
+      accountType === 'individual' ? formData.businessType : undefined
+    );
     
     setLoading(false);
 
@@ -148,7 +154,7 @@ export const RegisterPage: React.FC = () => {
             </div>
           )}
 
-          {step === 2 && (
+          {step === 2 && accountType === 'individual' && (
             <div className="space-y-4">
               <Input
                 label="Full Name"
@@ -165,6 +171,108 @@ export const RegisterPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
               />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  I am a...
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, businessType: 'resident' })}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      formData.businessType === 'resident'
+                        ? 'border-[#1B4B7F] bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="font-medium block">UAE Resident</span>
+                    <p className="text-xs text-gray-500 mt-1">Living in UAE</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, businessType: 'tourist' })}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      formData.businessType === 'tourist'
+                        ? 'border-[#1B4B7F] bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <span className="font-medium block">Tourist/Visitor</span>
+                    <p className="text-xs text-gray-500 mt-1">Visiting UAE</p>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && accountType === 'business' && (
+            <div className="space-y-4">
+              <Input
+                label="Full Name"
+                placeholder="John Doe"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                required
+              />
+              <Input
+                type="email"
+                label="Email Address"
+                placeholder="your@email.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                required
+              />
+            </div>
+          )}
+
+          {step === 3 && accountType === 'individual' && (
+            <div className="space-y-4">
+              <div>
+                <Input
+                  type="password"
+                  label="Password"
+                  placeholder="Create a strong password"
+                  value={formData.password}
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value });
+                    calculatePasswordStrength(e.target.value);
+                  }}
+                  required
+                />
+                <div className="mt-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 ${
+                          passwordStrength >= 75 ? 'bg-green-500' :
+                          passwordStrength >= 50 ? 'bg-yellow-500' :
+                          passwordStrength >= 25 ? 'bg-orange-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${passwordStrength}%` }}
+                      />
+                    </div>
+                    <span className="text-sm text-gray-600">
+                      {passwordStrength >= 75 ? 'Strong' :
+                       passwordStrength >= 50 ? 'Good' :
+                       passwordStrength >= 25 ? 'Fair' : 'Weak'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <Input
+                type="password"
+                label="Confirm Password"
+                placeholder="Re-enter your password"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                error={formData.confirmPassword && formData.password !== formData.confirmPassword ? 'Passwords do not match' : undefined}
+                required
+              />
+            </div>
+          )}
+
+          {step === 3 && accountType === 'business' && (
+            <div className="space-y-4">
               <div>
                 <Input
                   type="password"
@@ -289,6 +397,12 @@ export const RegisterPage: React.FC = () => {
                         <span className="font-medium">{formData.trn}</span>
                       </div>
                     </>
+                  )}
+                  {accountType === 'individual' && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Status:</span>
+                      <span className="font-medium capitalize">{formData.businessType || 'Not selected'}</span>
+                    </div>
                   )}
                 </div>
               </div>

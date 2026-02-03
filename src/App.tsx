@@ -16,6 +16,8 @@ import { Settings } from './pages/Settings';
 import { EducationCenter } from './pages/EducationCenter';
 import { ProfessionalDirectory } from './pages/ProfessionalDirectory';
 import { VATRateFinder } from './pages/VATRateFinder';
+import { IndividualDashboard } from './pages/IndividualDashboard';
+import { TouristRefund } from './pages/TouristRefund';
 
 function AppContent() {
   const { currentPage, user, showOnboarding, setShowOnboarding, isLoading, refreshBusinessProfile } = useApp();
@@ -47,6 +49,8 @@ function AppContent() {
   }
 
   const renderPage = () => {
+    const accountType = user?.accountType || 'business';
+    
     switch (currentPage) {
       case 'landing':
         return <LandingPage />;
@@ -55,27 +59,30 @@ function AppContent() {
       case 'register':
         return <RegisterPage />;
       case 'dashboard':
-        return user ? <Dashboard /> : <LandingPage />;
+        if (!user) return <LandingPage />;
+        return accountType === 'individual' ? <IndividualDashboard /> : <Dashboard />;
       case 'invoices':
-        return <InvoiceGenerator />;
+        return accountType === 'individual' ? <IndividualDashboard /> : <InvoiceGenerator />;
       case 'expenses':
         return <ReceiptScanner />;
       case 'expense-tracker':
-        return <ExpenseTracker />;
+        return accountType === 'individual' ? <ReceiptScanner /> : <ExpenseTracker />;
       case 'calculators':
         return <VATCalculator />;
+      case 'tourist-refund':
+        return <TouristRefund />;
       case 'vat-returns':
-        return <VATReturns />;
+        return accountType === 'individual' ? <IndividualDashboard /> : <VATReturns />;
       case 'vat-rates':
         return <VATRateFinder />;
       case 'reports':
-        return <Reports />;
+        return accountType === 'individual' ? <IndividualDashboard /> : <Reports />;
       case 'settings':
         return <Settings />;
       case 'education':
         return <EducationCenter />;
       case 'professionals':
-        return <ProfessionalDirectory />;
+        return accountType === 'individual' ? <IndividualDashboard /> : <ProfessionalDirectory />;
       default:
         return <LandingPage />;
     }

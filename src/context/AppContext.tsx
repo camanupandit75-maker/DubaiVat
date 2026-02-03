@@ -18,6 +18,7 @@ interface AppUser {
   email: string;
   fullName: string;
   businessProfile: BusinessProfile | null;
+  accountType?: 'business' | 'individual';
 }
 
 interface AppContextType {
@@ -29,7 +30,7 @@ interface AppContextType {
   setShowOnboarding: (show: boolean) => void;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, fullName?: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, fullName?: string, accountType?: 'business' | 'individual', residencyStatus?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   refreshBusinessProfile: () => Promise<void>;
 }
@@ -57,11 +58,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const fullName = supabaseUser.user_metadata?.full_name || 
                      supabaseUser.email?.split('@')[0] || 'User';
     
+    const accountType = (supabaseUser.user_metadata?.account_type || 'business') as 'business' | 'individual';
+    
     const basicUser: AppUser = {
       id: supabaseUser.id,
       email: supabaseUser.email || '',
       fullName,
       businessProfile: null,
+      accountType,
     };
     
     setUser(basicUser);
@@ -217,21 +221,34 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return { error };
   };
 
-  const handleSignUp = async (email: string, password: string, fullName?: string) => {
+  const handleSignUp = async (email: string, password: string, fullName?: string, accountType?: 'business' | 'individual', residencyStatus?: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      options: { 
+        data: { 
+          full_name: fullName,
+          account_type: accountType || 'business',
+          residency_status: residencyStatus,
+        } 
+      },
     });
 
     if (!error && data.user) {
+      const userAccountType = (data.user.user_metadata?.account_type || accountType || 'business') as 'business' | 'individual';
+      
       setUser({
         id: data.user.id,
         email: data.user.email || '',
         fullName: fullName || email.split('@')[0],
         businessProfile: null,
+        accountType: userAccountType,
       });
-      setShowOnboarding(true);
+      
+      // Only show onboarding for business accounts
+      if (userAccountType === 'business') {
+        setShowOnboarding(true);
+      }
       setCurrentPage('dashboard');
     }
     return { error };

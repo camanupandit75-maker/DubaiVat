@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   BookOpen,
-  Users
+  Users,
+  Plane
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { LanguageToggle } from './LanguageToggle';
@@ -26,7 +27,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { currentPage, setCurrentPage, user } = useApp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems = [
+  const accountType = user?.accountType || 'business';
+  
+  const businessNavItems = [
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'invoices', label: 'Invoices', icon: FileText },
     { id: 'expense-tracker', label: 'Expenses', icon: Receipt },
@@ -38,6 +41,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     { id: 'professionals', label: 'Professionals', icon: Users },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];
+
+  const individualNavItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: Home },
+    { id: 'calculators', label: 'VAT Calculator', icon: Calculator },
+    { id: 'tourist-refund', label: 'Tourist Refund', icon: Plane },
+    { id: 'expenses', label: 'My Receipts', icon: Receipt },
+    { id: 'vat-rates', label: 'VAT Rate Finder', icon: Calculator },
+    { id: 'education', label: 'Education', icon: BookOpen },
+    { id: 'settings', label: 'Settings', icon: Settings }
+  ];
+
+  const navItems = accountType === 'individual' ? individualNavItems : businessNavItems;
 
   return (
     <div className="min-h-screen bg-gray-50">

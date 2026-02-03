@@ -10,11 +10,17 @@ if (!supabaseUrl || !supabaseAnonKey) {
 export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
 
 // ============ AUTH ============
-export const signUp = async (email: string, password: string, fullName?: string) => {
+export const signUp = async (email: string, password: string, fullName?: string, accountType?: 'business' | 'individual', residencyStatus?: string) => {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { full_name: fullName } },
+    options: { 
+      data: { 
+        full_name: fullName,
+        account_type: accountType || 'business',
+        residency_status: residencyStatus,
+      } 
+    },
   });
   return { data, error };
 };

@@ -6,24 +6,26 @@ import { Card } from '../components/Card';
 import { useApp } from '../context/AppContext';
 
 export const LoginPage: React.FC = () => {
-  const { setCurrentPage, setUser, setShowOnboarding } = useApp();
+  const { setCurrentPage, signIn } = useApp();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUser({
-      id: '1',
-      name: 'Ahmed Al Mansouri',
-      email: email,
-      businessName: "Ahmed's Trading LLC",
-      trn: '100234567891234',
-      accountType: 'business'
-    });
-    setShowOnboarding(true);
-    setCurrentPage('dashboard');
+    setError('');
+    setLoading(true);
+
+    const { error: signInError } = await signIn(email, password);
+    
+    if (signInError) {
+      setError(signInError.message || 'Invalid email or password');
+      setLoading(false);
+    }
+    // Success is handled by AppContext automatically
   };
 
   return (
@@ -42,6 +44,12 @@ export const LoginPage: React.FC = () => {
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
           <Input
             type="email"
             label="Email Address"
@@ -49,6 +57,7 @@ export const LoginPage: React.FC = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={loading}
           />
 
           <div className="relative">
@@ -59,6 +68,7 @@ export const LoginPage: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              disabled={loading}
             />
             <button
               type="button"
@@ -76,6 +86,7 @@ export const LoginPage: React.FC = () => {
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="rounded border-gray-300 text-[#1B4B7F] focus:ring-[#1B4B7F]"
+                disabled={loading}
               />
               <span className="text-sm text-gray-600">Remember me</span>
             </label>
@@ -83,13 +94,14 @@ export const LoginPage: React.FC = () => {
               type="button"
               onClick={() => setCurrentPage('forgot-password')}
               className="text-sm text-[#1B4B7F] hover:underline"
+              disabled={loading}
             >
               Forgot Password?
             </button>
           </div>
 
-          <Button type="submit" className="w-full" size="lg">
-            Sign In
+          <Button type="submit" className="w-full" size="lg" disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign In'}
           </Button>
         </form>
 

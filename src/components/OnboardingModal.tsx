@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calculator, Check, AlertTriangle, X } from 'lucide-react';
 import { Button } from './Button';
+import { Input } from './Input';
+import { useApp } from '../context/AppContext';
+import { createBusinessProfile, updateBusinessProfile, getBusinessProfile } from '../lib/supabase';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -8,10 +11,146 @@ interface OnboardingModalProps {
 }
 
 export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComplete }) => {
+  const { user, refreshBusinessProfile, setShowOnboarding } = useApp();
   const [step, setStep] = useState(1);
   const [agreed, setAgreed] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [existingProfileId, setExistingProfileId] = useState<string | null>(null);
+  const justSavedRef = React.useRef(false);
+
+  // Check if profile exists when modal opens - if it does, close immediately
+  useEffect(() => {
+    if (isOpen && user?.id) {
+      const checkProfile = async () => {
+        const { data: profile } = await getBusinessProfile(user.id);
+        if (profile) {
+          // Profile exists, close modal immediately
+          console.log('Profile exists - closing onboarding modal');
+          onComplete();
+        }
+      };
+      // Check immediately when modal opens
+      checkProfile();
+    }
+  }, [isOpen, user?.id, onComplete]);
+
+  // Form state
+  const [businessName, setBusinessName] = useState('');
+  const [trn, setTrn] = useState('');
+  const [address, setAddress] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState(user?.email || '');
+  const [vatPeriod, setVatPeriod] = useState<'monthly' | 'quarterly'>('quarterly');
+
+  // Load existing profile data if it exists
+  useEffect(() => {
+    const loadExistingProfile = async () => {
+      if (user?.id && step === 4 && !justSavedRef.current) {
+        const { data: profile } = await getBusinessProfile(user.id);
+        if (profile) {
+          setExistingProfileId(profile.id);
+          setBusinessName(profile.business_name || '');
+          setTrn(profile.trn || '');
+          setAddress(profile.address || '');
+          setPhone(profile.phone || '');
+          setEmail(profile.email || user.email || '');
+          setVatPeriod(profile.vat_period || 'quarterly');
+        }
+      }
+    };
+    loadExistingProfile();
+  }, [user?.id, step]);
 
   if (!isOpen) return null;
+
+  const handleSkip = () => {
+    // Allow users to skip business profile setup
+    console.log('User skipped business profile setup');
+    // Mark onboarding as checked so it doesn't show again
+    setShowOnboarding(false);
+    // Call onComplete to close the modal immediately
+    onComplete();
+  };
+
+  const handleComplete = async () => {
+    if (!user?.id) return;
+    if (!businessName.trim()) {
+      setError('Business name is required');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+
+    const profileData = {
+      business_name: businessName,
+      trn: trn || null,
+      address: address || null,
+      phone: phone || null,
+      email: email || user.email,
+      vat_period: vatPeriod,
+    };
+
+    let saveError = null;
+
+    // If profile exists, update it; otherwise create new one
+    if (existingProfileId) {
+      const { error: updateError } = await updateBusinessProfile(existingProfileId, profileData);
+      saveError = updateError;
+    } else {
+      const { error: createError } = await createBusinessProfile({
+        user_id: user.id,
+        ...profileData,
+      });
+      saveError = createError;
+    }
+
+    setSaving(false);
+
+    if (saveError) {
+      // Handle duplicate key error specifically
+      if (saveError.message?.includes('duplicate key') || saveError.code === '23505') {
+        // Profile was created by another process, try to update it
+        const { data: existingProfile } = await getBusinessProfile(user.id);
+        if (existingProfile) {
+          setExistingProfileId(existingProfile.id);
+          const { error: updateError } = await updateBusinessProfile(existingProfile.id, profileData);
+          if (updateError) {
+            setError(updateError.message || 'Failed to update business profile');
+          } else {
+            await refreshBusinessProfile();
+            onComplete();
+          }
+        } else {
+          setError('A business profile already exists. Please refresh the page.');
+        }
+      } else {
+        setError(saveError.message || 'Failed to save business profile');
+      }
+    } else {
+      // Mark as just saved to prevent immediate re-opening
+      setJustSaved(true);
+      
+      // Refresh the business profile and wait for it to update
+      await refreshBusinessProfile();
+      
+      // Small delay to ensure state updates propagate
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Verify the profile was saved by checking again
+      const { data: savedProfile } = await getBusinessProfile(user.id);
+      if (savedProfile) {
+        // Profile exists, close the modal
+        console.log('Business profile saved and verified');
+        onComplete();
+      } else {
+        // Profile still not found, but close anyway - will be loaded on next page load
+        console.warn('Profile saved but not immediately available - closing modal');
+        onComplete();
+      }
+    }
+  };
 
   const features = [
     {
@@ -150,16 +289,111 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({ isOpen, onComp
                 <Button
                   size="lg"
                   disabled={!agreed}
-                  onClick={onComplete}
+                  onClick={() => setStep(4)}
                 >
-                  Get Started <Check size={20} />
+                  Continue <Check size={20} />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div>
+              <h2 className="text-2xl font-bold text-[#1B4B7F] mb-2 text-center">
+                Complete Your Business Profile
+              </h2>
+              <p className="text-gray-600 text-sm text-center mb-6">
+                Optional - Skip if you're registering as an individual
+              </p>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <Input
+                  label="Business Name"
+                  placeholder="Your Business LLC"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  required
+                  disabled={saving}
+                />
+
+                <Input
+                  label="Tax Registration Number (TRN)"
+                  placeholder="100 2345 6789 1234"
+                  value={trn}
+                  onChange={(e) => setTrn(e.target.value)}
+                  helperText="15 digit number (optional)"
+                  disabled={saving}
+                />
+
+                <Input
+                  label="Business Address"
+                  placeholder="Enter your business address"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  disabled={saving}
+                />
+
+                <Input
+                  label="Phone Number"
+                  placeholder="+971 XX XXX XXXX"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={saving}
+                />
+
+                <Input
+                  type="email"
+                  label="Business Email"
+                  placeholder="business@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={saving}
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    VAT Filing Period
+                  </label>
+                  <select
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-[#1B4B7F] focus:ring-2 focus:ring-blue-200"
+                    value={vatPeriod}
+                    onChange={(e) => setVatPeriod(e.target.value as 'monthly' | 'quarterly')}
+                    disabled={saving}
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-center gap-3 mt-6">
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  disabled={saving}
+                  onClick={handleSkip}
+                >
+                  Skip for Now
+                </Button>
+                <Button
+                  size="lg"
+                  disabled={!businessName.trim() || saving}
+                  onClick={handleComplete}
+                >
+                  {saving ? 'Saving...' : 'Complete Setup'} <Check size={20} />
                 </Button>
               </div>
             </div>
           )}
 
           <div className="flex justify-center mt-6 space-x-2">
-            {[1, 2, 3].map((i) => (
+            {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
                 className={`w-2 h-2 rounded-full transition-colors ${

@@ -1,82 +1,77 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Filter, Download, Search, Edit, Trash2, Eye, Plus } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { useApp } from '../context/AppContext';
+import { getExpenses, deleteExpense } from '../lib/supabase';
 
 export const ExpenseTracker: React.FC = () => {
-  const { setCurrentPage } = useApp();
+  const { setCurrentPage, user } = useApp();
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState('this-month');
   const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const expenses = [
-    {
-      id: '1',
-      date: '2026-01-25',
-      vendor: 'Emirates Office Supplies',
-      trn: '100234567891234',
-      category: 'Office Supplies',
-      amount: 1190.48,
-      vat: 59.52,
-      total: 1250.00
-    },
-    {
-      id: '2',
-      date: '2026-01-24',
-      vendor: 'Gulf Petroleum',
-      trn: '100345678912345',
-      category: 'Fuel',
-      amount: 809.52,
-      vat: 40.48,
-      total: 850.00
-    },
-    {
-      id: '3',
-      date: '2026-01-23',
-      vendor: 'Al Khaleej Restaurant',
-      trn: '100456789123456',
-      category: 'Meals',
-      amount: 285.71,
-      vat: 14.29,
-      total: 300.00
-    },
-    {
-      id: '4',
-      date: '2026-01-22',
-      vendor: 'DEWA',
-      trn: '100567891234567',
-      category: 'Utilities',
-      amount: 1904.76,
-      vat: 95.24,
-      total: 2000.00
-    },
-    {
-      id: '5',
-      date: '2026-01-21',
-      vendor: 'Dubai Business Services',
-      trn: '100678912345678',
-      category: 'Professional Services',
-      amount: 4761.90,
-      vat: 238.10,
-      total: 5000.00
-    },
-    {
-      id: '6',
-      date: '2026-01-20',
-      vendor: 'Tech Equipment LLC',
-      trn: '100789123456789',
-      category: 'Equipment',
-      amount: 2857.14,
-      vat: 142.86,
-      total: 3000.00
+  // Fetch expenses on mount
+  useEffect(() => {
+    const fetchExpenses = async () => {
+      if (!user?.businessProfile?.id) {
+        setLoading(false);
+        return;
+      }
+      
+      const { data, error } = await getExpenses(user.businessProfile.id);
+      if (!error && data) {
+        setExpenses(data);
+      }
+      setLoading(false);
+    };
+    
+    fetchExpenses();
+  }, [user]);
+
+  // Delete expense
+  const handleDeleteExpense = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this expense?')) return;
+    
+    const { error } = await deleteExpense(id);
+    if (!error) {
+      setExpenses(expenses.filter(e => e.id !== id));
+    } else {
+      alert('Failed to delete expense: ' + error.message);
     }
-  ];
+  };
 
-  const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-  const totalVAT = expenses.reduce((sum, exp) => sum + exp.vat, 0);
-  const totalCount = expenses.length;
+  // Filter expenses based on search and filters
+  const filteredExpenses = expenses.filter(exp => {
+    const matchesSearch = !searchTerm || 
+      exp.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      exp.amount?.toString().includes(searchTerm);
+    
+    const matchesCategory = categoryFilter.length === 0 || 
+      categoryFilter.includes(exp.category);
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  const totalExpenses = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount || 0), 0);
+  const totalVAT = filteredExpenses.reduce((sum, exp) => sum + Number(exp.vat_amount || 0), 0);
+  const totalCount = filteredExpenses.length;
+
+  if (loading) {
+    return (
+      <div className="space-y-6 pb-20 lg:pb-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-[#1B4B7F] border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading expenses...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
@@ -182,47 +177,67 @@ export const ExpenseTracker: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {expenses.map((expense) => (
+              {filteredExpenses.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-gray-500">
+                    {expenses.length === 0 
+                      ? 'No expenses found. Start by scanning a receipt or adding an expense.'
+                      : 'No expenses match your filters.'}
+                  </td>
+                </tr>
+              ) : (
+                filteredExpenses.map((expense) => (
                 <tr key={expense.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="py-3 px-4 text-sm text-gray-700">{expense.date}</td>
-                  <td className="py-3 px-4 text-sm font-medium text-gray-900">{expense.vendor}</td>
-                  <td className="py-3 px-4 text-sm text-gray-600 font-mono">{expense.trn}</td>
+                  <td className="py-3 px-4 text-sm font-medium text-gray-900">{expense.vendor_name}</td>
+                  <td className="py-3 px-4 text-sm text-gray-600 font-mono">{expense.vendor_trn || '-'}</td>
                   <td className="py-3 px-4">
                     <span className="inline-block px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
-                      {expense.category}
+                      {expense.category || 'Uncategorized'}
                     </span>
                   </td>
                   <td className="py-3 px-4 text-sm text-right text-gray-700">
-                    AED {expense.amount.toFixed(2)}
+                    AED {Number(expense.amount || 0).toFixed(2)}
                   </td>
                   <td className="py-3 px-4 text-sm text-right text-green-600">
-                    AED {expense.vat.toFixed(2)}
+                    AED {Number(expense.vat_amount || 0).toFixed(2)}
                   </td>
                   <td className="py-3 px-4 text-sm text-right font-medium text-[#1B4B7F]">
-                    AED {expense.total.toFixed(2)}
+                    AED {Number(expense.total || expense.amount || 0).toFixed(2)}
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex justify-center space-x-2">
-                      <button className="text-gray-600 hover:text-[#1B4B7F] transition-colors">
+                      {expense.receipt_url && (
+                        <a 
+                          href={expense.receipt_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-gray-600 hover:text-[#1B4B7F] transition-colors"
+                        >
                         <Eye size={18} />
-                      </button>
+                        </a>
+                      )}
                       <button className="text-gray-600 hover:text-[#1B4B7F] transition-colors">
                         <Edit size={18} />
                       </button>
-                      <button className="text-gray-600 hover:text-red-600 transition-colors">
+                      <button 
+                        onClick={() => handleDeleteExpense(expense.id)}
+                        className="text-gray-600 hover:text-red-600 transition-colors"
+                      >
                         <Trash2 size={18} />
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         <div className="flex items-center justify-between mt-6 pt-6 border-t">
           <div className="text-sm text-gray-600">
-            Showing 1 to {expenses.length} of {expenses.length} results
+            Showing {filteredExpenses.length > 0 ? 1 : 0} to {filteredExpenses.length} of {expenses.length} results
           </div>
           <div className="flex items-center space-x-2">
             <Button variant="secondary" size="sm" disabled>

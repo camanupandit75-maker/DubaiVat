@@ -1,17 +1,75 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { TrendingUp, TrendingDown, Calendar, DollarSign, FileText, Receipt, PlusCircle, Camera, Calculator } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { useApp } from '../context/AppContext';
+import { getVATSummary, getInvoices, getExpenses } from '../lib/supabase';
 
 export const Dashboard: React.FC = () => {
   const { user, setCurrentPage } = useApp();
+  const [vatSummary, setVatSummary] = useState({
+    vatCollected: 0,
+    vatPaid: 0,
+    netVAT: 0,
+    totalSales: 0,
+    totalPurchases: 0,
+  });
+  const [recentInvoices, setRecentInvoices] = useState<any[]>([]);
+  const [recentExpenses, setRecentExpenses] = useState<any[]>([]);
+  const [allInvoices, setAllInvoices] = useState<any[]>([]);
+  const [allExpenses, setAllExpenses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!user?.businessProfile?.id) {
+        setLoading(false);
+        return;
+      }
+
+      const businessId = user.businessProfile.id;
+      
+      // Get current month date range
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+        .toISOString().split('T')[0];
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+        .toISOString().split('T')[0];
+
+      try {
+        const [summary, invoicesRes, expensesRes] = await Promise.all([
+          getVATSummary(businessId, startOfMonth, endOfMonth),
+          getInvoices(businessId),
+          getExpenses(businessId),
+        ]);
+
+        setVatSummary(summary);
+        setRecentInvoices(invoicesRes.data?.slice(0, 5) || []);
+        setRecentExpenses(expensesRes.data?.slice(0, 5) || []);
+        setAllInvoices(invoicesRes.data || []);
+        setAllExpenses(expensesRes.data || []);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [user]);
+
+  // Calculate next deadline (simplified - 28 days from end of current period)
+  const now = new Date();
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const deadline = new Date(endOfMonth);
+  deadline.setDate(deadline.getDate() + 28);
+  const daysUntilDeadline = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
   const stats = [
     {
       title: 'VAT Collected',
-      value: 'AED 15,750',
-      change: '+12.5%',
+      value: `AED ${vatSummary.vatCollected.toLocaleString()}`,
+      change: 'This month',
       trend: 'up',
       icon: TrendingUp,
       color: 'text-green-600',
@@ -19,8 +77,8 @@ export const Dashboard: React.FC = () => {
     },
     {
       title: 'VAT Paid',
-      value: 'AED 8,420',
-      change: '+8.2%',
+      value: `AED ${vatSummary.vatPaid.toLocaleString()}`,
+      change: 'This month',
       trend: 'up',
       icon: TrendingDown,
       color: 'text-blue-600',
@@ -28,8 +86,8 @@ export const Dashboard: React.FC = () => {
     },
     {
       title: 'Net VAT',
-      value: 'AED 7,330',
-      change: 'Owed',
+      value: `AED ${vatSummary.netVAT.toLocaleString()}`,
+      change: vatSummary.netVAT >= 0 ? 'Owed' : 'Refund',
       trend: 'neutral',
       icon: DollarSign,
       color: 'text-[#C5A572]',
@@ -37,8 +95,8 @@ export const Dashboard: React.FC = () => {
     },
     {
       title: 'Next Deadline',
-      value: '18 Days',
-      change: 'Feb 28, 2026',
+      value: `${daysUntilDeadline} Days`,
+      change: deadline.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
       trend: 'neutral',
       icon: Calendar,
       color: 'text-orange-600',
@@ -46,27 +104,125 @@ export const Dashboard: React.FC = () => {
     }
   ];
 
+  // Combine invoices and expenses for recent activity
   const recentActivity = [
-    { type: 'invoice', number: 'INV-2024-001', customer: 'Al Maktoum Trading', amount: 'AED 5,250', date: '2026-01-25', status: 'Paid' },
-    { type: 'expense', vendor: 'Emirates Office Supplies', amount: 'AED 1,250', date: '2026-01-24', status: 'Recorded' },
-    { type: 'invoice', number: 'INV-2024-002', customer: 'Dubai Retail Co.', amount: 'AED 8,500', date: '2026-01-23', status: 'Sent' },
-    { type: 'expense', vendor: 'Gulf Petroleum', amount: 'AED 850', date: '2026-01-22', status: 'Recorded' },
-    { type: 'invoice', number: 'INV-2024-003', customer: 'Sharjah Imports', amount: 'AED 12,300', date: '2026-01-21', status: 'Draft' }
-  ];
+    ...recentInvoices.map(inv => ({
+      type: 'invoice' as const,
+      number: inv.invoice_number,
+      customer: inv.customer_name,
+      amount: `AED ${Number(inv.total || 0).toLocaleString()}`,
+      date: inv.date,
+      status: inv.status === 'paid' ? 'Paid' : inv.status === 'sent' ? 'Sent' : 'Draft'
+    })),
+    ...recentExpenses.map(exp => ({
+      type: 'expense' as const,
+      vendor: exp.vendor_name,
+      amount: `AED ${Number(exp.total || exp.amount || 0).toLocaleString()}`,
+      date: exp.date,
+      status: 'Recorded'
+    }))
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 
-  const chartData = {
-    months: ['Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan'],
-    income: [12500, 15200, 14800, 16500, 18200, 19500],
-    expenses: [8200, 9500, 8800, 9200, 10500, 11200]
+  // Calculate monthly income vs expenses for last 6 months
+  const calculateMonthlyData = () => {
+    const now = new Date();
+    const monthlyData: { month: string; income: number; expenses: number }[] = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1)
+        .toISOString().split('T')[0];
+      const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0)
+        .toISOString().split('T')[0];
+      
+      const monthName = monthDate.toLocaleDateString('en-US', { month: 'short' });
+      
+      // Calculate income from invoices (non-draft)
+      const monthInvoices = allInvoices.filter(inv => 
+        inv.date >= monthStart && 
+        inv.date <= monthEnd && 
+        inv.status !== 'draft'
+      );
+      const income = monthInvoices.reduce((sum, inv) => sum + Number(inv.total || 0), 0);
+      
+      // Calculate expenses
+      const monthExpenses = allExpenses.filter(exp => 
+        exp.date >= monthStart && 
+        exp.date <= monthEnd
+      );
+      const expenses = monthExpenses.reduce((sum, exp) => sum + Number(exp.total || exp.amount || 0), 0);
+      
+      monthlyData.push({ month: monthName, income, expenses });
+    }
+    
+    return monthlyData;
   };
 
-  const maxValue = Math.max(...chartData.income, ...chartData.expenses);
+  const chartData = calculateMonthlyData();
+  const maxValue = Math.max(
+    ...chartData.map(d => Math.max(d.income, d.expenses)),
+    1 // Ensure at least 1 to prevent division by zero
+  );
+
+  // Calculate VAT trend for last 4 months
+  const calculateVATTrend = () => {
+    const now = new Date();
+    const vatTrend: { month: string; collected: number; paid: number }[] = [];
+    
+    for (let i = 3; i >= 0; i--) {
+      const monthDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1)
+        .toISOString().split('T')[0];
+      const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0)
+        .toISOString().split('T')[0];
+      
+      const monthName = monthDate.toLocaleDateString('en-US', { month: 'long' });
+      
+      // Calculate VAT collected from invoices
+      const monthInvoices = allInvoices.filter(inv => 
+        inv.date >= monthStart && 
+        inv.date <= monthEnd && 
+        inv.status !== 'draft'
+      );
+      const collected = monthInvoices.reduce((sum, inv) => sum + Number(inv.vat_amount || 0), 0);
+      
+      // Calculate VAT paid from expenses
+      const monthExpenses = allExpenses.filter(exp => 
+        exp.date >= monthStart && 
+        exp.date <= monthEnd
+      );
+      const paid = monthExpenses.reduce((sum, exp) => sum + Number(exp.vat_amount || 0), 0);
+      
+      vatTrend.push({ month: monthName, collected, paid });
+    }
+    
+    return vatTrend;
+  };
+
+  const vatTrendData = calculateVATTrend();
+  const maxVATValue = Math.max(
+    ...vatTrendData.map(item => Math.abs(item.collected - item.paid)),
+    1
+  );
+
+  if (loading) {
+    return (
+      <div className="space-y-6 pb-20 lg:pb-6">
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-[#1B4B7F] border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 pb-20 lg:pb-6">
       <div>
         <h1 className="text-3xl font-bold text-[#1B4B7F]">
-          Welcome back, {user?.name?.split(' ')[0]}!
+          Welcome back, {user?.fullName?.split(' ')[0] || 'User'}!
         </h1>
         <p className="text-gray-600 mt-1">Here's your VAT overview for this month</p>
       </div>
@@ -109,29 +265,35 @@ export const Dashboard: React.FC = () => {
       <div className="grid lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <h2 className="text-xl font-semibold text-[#1B4B7F] mb-6">Income vs Expenses</h2>
-          <div className="space-y-4">
-            {chartData.months.map((month, index) => (
-              <div key={index}>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="font-medium text-gray-700">{month}</span>
-                  <div className="flex gap-4">
-                    <span className="text-green-600">AED {chartData.income[index].toLocaleString()}</span>
-                    <span className="text-red-600">AED {chartData.expenses[index].toLocaleString()}</span>
+          {chartData.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No data available. Start by creating invoices and adding expenses.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {chartData.map((data, index) => (
+                <div key={index}>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="font-medium text-gray-700">{data.month}</span>
+                    <div className="flex gap-4">
+                      <span className="text-green-600">AED {data.income.toLocaleString()}</span>
+                      <span className="text-red-600">AED {data.expenses.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-1 h-8">
+                    <div
+                      className="bg-green-500 rounded"
+                      style={{ width: `${maxValue > 0 ? (data.income / maxValue) * 100 : 0}%` }}
+                    />
+                    <div
+                      className="bg-red-500 rounded"
+                      style={{ width: `${maxValue > 0 ? (data.expenses / maxValue) * 100 : 0}%` }}
+                    />
                   </div>
                 </div>
-                <div className="flex gap-1 h-8">
-                  <div
-                    className="bg-green-500 rounded"
-                    style={{ width: `${(chartData.income[index] / maxValue) * 100}%` }}
-                  />
-                  <div
-                    className="bg-red-500 rounded"
-                    style={{ width: `${(chartData.expenses[index] / maxValue) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
           <div className="flex justify-center gap-6 mt-6 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-green-500 rounded" />
@@ -146,29 +308,33 @@ export const Dashboard: React.FC = () => {
 
         <Card>
           <h2 className="text-xl font-semibold text-[#1B4B7F] mb-4">VAT Trend</h2>
-          <div className="space-y-3">
-            {[
-              { month: 'January', collected: 15750, paid: 8420 },
-              { month: 'December', collected: 18200, paid: 10500 },
-              { month: 'November', collected: 16500, paid: 9200 },
-              { month: 'October', collected: 14800, paid: 8800 }
-            ].map((item, index) => (
-              <div key={index}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className="text-gray-600">{item.month}</span>
-                  <span className="font-medium text-[#1B4B7F]">
-                    AED {(item.collected - item.paid).toLocaleString()}
-                  </span>
-                </div>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#1B4B7F] rounded-full"
-                    style={{ width: `${((item.collected - item.paid) / 10000) * 100}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+          {vatTrendData.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 text-sm">
+              No VAT data available yet.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {vatTrendData.map((item, index) => {
+                const netVAT = item.collected - item.paid;
+                return (
+                  <div key={index}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600">{item.month}</span>
+                      <span className="font-medium text-[#1B4B7F]">
+                        AED {netVAT.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${netVAT >= 0 ? 'bg-[#1B4B7F]' : 'bg-red-500'}`}
+                        style={{ width: `${maxVATValue > 0 ? Math.min(Math.abs(netVAT / maxVATValue) * 100, 100) : 0}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </Card>
       </div>
 
@@ -190,7 +356,14 @@ export const Dashboard: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {recentActivity.map((activity, index) => (
+              {recentActivity.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-gray-500">
+                    No recent activity. Start by creating an invoice or adding an expense.
+                  </td>
+                </tr>
+              ) : (
+                recentActivity.map((activity, index) => (
                 <tr key={index} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2">
@@ -227,7 +400,8 @@ export const Dashboard: React.FC = () => {
                     </span>
                   </td>
                 </tr>
-              ))}
+                ))
+              )}
             </tbody>
           </table>
         </div>

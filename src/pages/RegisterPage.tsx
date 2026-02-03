@@ -6,7 +6,7 @@ import { Card } from '../components/Card';
 import { useApp } from '../context/AppContext';
 
 export const RegisterPage: React.FC = () => {
-  const { setCurrentPage, setUser, setShowOnboarding } = useApp();
+  const { setCurrentPage, signUp } = useApp();
   const [step, setStep] = useState(1);
   const [accountType, setAccountType] = useState<'business' | 'individual'>('business');
   const [formData, setFormData] = useState({
@@ -21,6 +21,8 @@ export const RegisterPage: React.FC = () => {
   });
 
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const validateTRN = (trn: string) => {
     const cleaned = trn.replace(/\s/g, '');
@@ -38,22 +40,33 @@ export const RegisterPage: React.FC = () => {
     setPasswordStrength(strength);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (step < (accountType === 'business' ? 4 : 3)) {
       setStep(step + 1);
-    } else {
-      setUser({
-        id: '1',
-        name: formData.name,
-        email: formData.email,
-        businessName: formData.businessName,
-        trn: formData.trn,
-        accountType
-      });
-      setShowOnboarding(true);
-      setCurrentPage('dashboard');
+      return;
     }
+
+    // Final step - create account
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    const { error: signUpError } = await signUp(formData.email, formData.password, formData.name);
+    
+    setLoading(false);
+
+    if (signUpError) {
+      setError(signUpError.message || 'Failed to create account');
+      // Go back to step 2 to show error
+      setStep(2);
+    }
+    // Success is handled by AppContext automatically - it will show onboarding
   };
 
   const trnValidation = validateTRN(formData.trn);
@@ -93,6 +106,12 @@ export const RegisterPage: React.FC = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
           {step === 1 && (
             <div className="space-y-4">
               <div>
@@ -301,8 +320,8 @@ export const RegisterPage: React.FC = () => {
                 Back
               </Button>
             )}
-            <Button type="submit" className="flex-1">
-              {step < (accountType === 'business' ? 4 : 3) ? 'Next' : 'Create Account'}
+            <Button type="submit" className="flex-1" disabled={loading}>
+              {loading ? 'Creating Account...' : (step < (accountType === 'business' ? 4 : 3) ? 'Next' : 'Create Account')}
             </Button>
           </div>
         </form>

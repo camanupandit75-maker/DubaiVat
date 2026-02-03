@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { LanguageToggle } from './LanguageToggle';
+import { UserMenu } from './UserMenu';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -30,6 +31,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     { id: 'invoices', label: 'Invoices', icon: FileText },
     { id: 'expense-tracker', label: 'Expenses', icon: Receipt },
     { id: 'vat-returns', label: 'VAT Returns', icon: Calculator },
+    { id: 'vat-rates', label: 'VAT Rate Finder', icon: Calculator },
     { id: 'calculators', label: 'Calculators', icon: PlusCircle },
     { id: 'reports', label: 'Reports', icon: BarChart3 },
     { id: 'education', label: 'Education', icon: BookOpen },
@@ -65,12 +67,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   3
                 </span>
               </button>
-              <button className="flex items-center space-x-2 text-gray-600 hover:text-[#1B4B7F] transition-colors">
-                <div className="w-8 h-8 bg-[#1B4B7F] rounded-full flex items-center justify-center text-white">
-                  <User size={20} />
-                </div>
-                <span className="hidden md:block font-medium">{user?.name}</span>
-              </button>
+              <UserMenu />
             </div>
           </div>
         </div>

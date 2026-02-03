@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { AppLayout } from './components/AppLayout';
 import { OnboardingModal } from './components/OnboardingModal';
@@ -15,9 +15,36 @@ import { Reports } from './pages/Reports';
 import { Settings } from './pages/Settings';
 import { EducationCenter } from './pages/EducationCenter';
 import { ProfessionalDirectory } from './pages/ProfessionalDirectory';
+import { VATRateFinder } from './pages/VATRateFinder';
 
 function AppContent() {
-  const { currentPage, user, showOnboarding, setShowOnboarding } = useApp();
+  const { currentPage, user, showOnboarding, setShowOnboarding, isLoading, refreshBusinessProfile } = useApp();
+  const [forceShow, setForceShow] = useState(false);
+
+  // Safety timeout - show app after 12 seconds even if still loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        console.warn('Loading timeout - forcing app to show');
+        setForceShow(true);
+      }
+    }, 12000);
+
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
+  // Show loading spinner while checking auth (unless forced to show)
+  if (isLoading && !forceShow) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#1B4B7F] border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-2 text-sm text-gray-400">If this takes too long, try refreshing the page</p>
+        </div>
+      </div>
+    );
+  }
 
   const renderPage = () => {
     switch (currentPage) {
@@ -28,7 +55,7 @@ function AppContent() {
       case 'register':
         return <RegisterPage />;
       case 'dashboard':
-        return <Dashboard />;
+        return user ? <Dashboard /> : <LandingPage />;
       case 'invoices':
         return <InvoiceGenerator />;
       case 'expenses':
@@ -39,6 +66,8 @@ function AppContent() {
         return <VATCalculator />;
       case 'vat-returns':
         return <VATReturns />;
+      case 'vat-rates':
+        return <VATRateFinder />;
       case 'reports':
         return <Reports />;
       case 'settings':
@@ -59,9 +88,15 @@ function AppContent() {
   return (
     <>
       <AppLayout>{renderPage()}</AppLayout>
+      {/* Only show onboarding if user exists but has no business profile */}
       <OnboardingModal
-        isOpen={showOnboarding}
-        onComplete={() => setShowOnboarding(false)}
+        isOpen={showOnboarding && !!user && !user.businessProfile}
+        onComplete={async () => {
+          // Set showOnboarding to false immediately to close modal
+          setShowOnboarding(false);
+          // Optionally refresh business profile (but don't wait for it)
+          refreshBusinessProfile().catch(console.error);
+        }}
       />
     </>
   );

@@ -5,6 +5,8 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { useApp } from '../context/AppContext';
 import { Modal } from '../components/Modal';
+import { createInvoice, validateVATEntry } from '../lib/supabase';
+import { VATVerificationButton } from '../components/VATVerificationButton';
 
 interface InvoiceItem {
   id: string;
@@ -12,16 +14,94 @@ interface InvoiceItem {
   quantity: number;
   unitPrice: number;
   vatRate: number;
+  vatRateType?: 'standard' | 'zero-rated' | 'exempt';
 }
 
 export const InvoiceGenerator: React.FC = () => {
   const { user } = useApp();
   const [showPreview, setShowPreview] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  const handleSaveInvoice = async (status: 'draft' | 'sent' = 'draft') => {
+    if (!user?.businessProfile?.id) {
+      alert('Please complete your business profile first');
+      return;
+    }
+
+    if (!invoiceData.customerName.trim()) {
+      setSaveError('Customer name is required');
+      return;
+    }
+
+    if (items.length === 0 || items.some(item => !item.description.trim() || item.unitPrice <= 0)) {
+      setSaveError('Please add at least one valid invoice item');
+      return;
+    }
+
+    setSaving(true);
+    setSaveError('');
+
+    const invoiceDataToSave = {
+      business_id: user.businessProfile.id,
+      invoice_number: invoiceData.invoiceNumber || generateInvoiceNumber(),
+      customer_name: invoiceData.customerName,
+      customer_email: invoiceData.customerEmail || null,
+      customer_trn: invoiceData.customerTRN || null,
+      customer_address: invoiceData.customerAddress || null,
+      date: invoiceData.invoiceDate,
+      due_date: invoiceData.dueDate || null,
+      subtotal: subtotal,
+      vat_amount: totalVAT,
+      total: total,
+      status: status,
+      notes: invoiceData.notes || null,
+    };
+
+    const invoiceItems = items.map(item => ({
+      description: item.description,
+      quantity: item.quantity,
+      unit_price: item.unitPrice,
+      amount: item.quantity * item.unitPrice,
+      vat_rate: item.vatRateType === 'standard' ? 5 : 0,
+    }));
+
+    const { data, error } = await createInvoice(invoiceDataToSave, invoiceItems);
+
+    setSaving(false);
+
+    if (error) {
+      setSaveError(error.message || 'Failed to save invoice');
+    } else {
+      alert(`Invoice saved successfully as ${status === 'draft' ? 'draft' : 'sent'}!`);
+      // Reset form
+      setInvoiceData({
+        invoiceNumber: generateInvoiceNumber(),
+        invoiceDate: new Date().toISOString().split('T')[0],
+        dueDate: '',
+        customerName: '',
+        customerTRN: '',
+        customerEmail: '',
+        customerAddress: '',
+        paymentTerms: 'net30',
+        notes: ''
+      });
+      setItems([{ id: '1', description: '', quantity: 1, unitPrice: 0, vatRate: 5 }]);
+      setSaveError('');
+    }
+  };
+
+  // Generate invoice number
+  const generateInvoiceNumber = () => {
+    const year = new Date().getFullYear();
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `INV-${year}-${random}`;
+  };
 
   const [invoiceData, setInvoiceData] = useState({
-    invoiceNumber: 'INV-2024-004',
-    invoiceDate: '2026-01-27',
-    dueDate: '2026-02-27',
+    invoiceNumber: generateInvoiceNumber(),
+    invoiceDate: new Date().toISOString().split('T')[0],
+    dueDate: '',
     customerName: '',
     customerTRN: '',
     customerEmail: '',
@@ -31,7 +111,7 @@ export const InvoiceGenerator: React.FC = () => {
   });
 
   const [items, setItems] = useState<InvoiceItem[]>([
-    { id: '1', description: '', quantity: 1, unitPrice: 0, vatRate: 5 }
+    { id: '1', description: '', quantity: 1, unitPrice: 0, vatRate: 5, vatRateType: 'standard' }
   ]);
 
   const addItem = () => {
@@ -40,7 +120,8 @@ export const InvoiceGenerator: React.FC = () => {
       description: '',
       quantity: 1,
       unitPrice: 0,
-      vatRate: 5
+      vatRate: 5,
+      vatRateType: 'standard'
     }]);
   };
 
@@ -59,7 +140,20 @@ export const InvoiceGenerator: React.FC = () => {
   };
 
   const calculateItemVAT = (item: InvoiceItem) => {
-    return calculateItemAmount(item) * (item.vatRate / 100);
+    if (item.vatRateType === 'standard') {
+      return calculateItemAmount(item) * 0.05;
+    }
+    return 0; // zero-rated or exempt
+  };
+
+  const updateVATRateType = (id: string, rateType: 'standard' | 'zero-rated' | 'exempt') => {
+    setItems(items.map(item => {
+      if (item.id === id) {
+        const vatRate = rateType === 'standard' ? 5 : 0;
+        return { ...item, vatRateType: rateType, vatRate };
+      }
+      return item;
+    }));
   };
 
   const subtotal = items.reduce((sum, item) => sum + calculateItemAmount(item), 0);
@@ -93,11 +187,11 @@ export const InvoiceGenerator: React.FC = () => {
               <div className="grid md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
                 <div>
                   <p className="text-sm text-gray-600">Business Name</p>
-                  <p className="font-medium">{user?.businessName}</p>
+                  <p className="font-medium">{user?.businessProfile?.business_name || 'Not set'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">TRN</p>
-                  <p className="font-medium">{user?.trn}</p>
+                  <p className="font-medium">{user?.businessProfile?.trn || 'Not set'}</p>
                 </div>
               </div>
             </div>
@@ -197,15 +291,41 @@ export const InvoiceGenerator: React.FC = () => {
                         onChange={(e) => updateItem(item.id, 'unitPrice', parseFloat(e.target.value))}
                       />
                       <div className="flex items-center gap-2">
-                        <select
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"
-                          value={item.vatRate}
-                          onChange={(e) => updateItem(item.id, 'vatRate', parseFloat(e.target.value))}
-                        >
-                          <option value="5">5% VAT</option>
-                          <option value="0">0% VAT</option>
-                          <option value="-1">Exempt</option>
-                        </select>
+                        <div className="flex-1 flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => updateVATRateType(item.id, 'standard')}
+                            className={`flex-1 py-2 px-2 rounded text-xs font-medium transition-colors ${
+                              item.vatRateType === 'standard'
+                                ? 'bg-green-600 text-white'
+                                : 'bg-green-100 text-green-800 hover:bg-green-200'
+                            }`}
+                          >
+                            5%
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateVATRateType(item.id, 'zero-rated')}
+                            className={`flex-1 py-2 px-2 rounded text-xs font-medium transition-colors ${
+                              item.vatRateType === 'zero-rated'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                            }`}
+                          >
+                            0% ZR
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateVATRateType(item.id, 'exempt')}
+                            className={`flex-1 py-2 px-2 rounded text-xs font-medium transition-colors ${
+                              item.vatRateType === 'exempt'
+                                ? 'bg-yellow-600 text-white'
+                                : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                            }`}
+                          >
+                            0% EX
+                          </button>
+                        </div>
                         {items.length > 1 && (
                           <button
                             onClick={() => removeItem(item.id)}
@@ -216,11 +336,34 @@ export const InvoiceGenerator: React.FC = () => {
                         )}
                       </div>
                     </div>
-                    <div className="mt-2 text-right text-sm">
-                      <span className="text-gray-600">Amount: </span>
-                      <span className="font-medium text-[#1B4B7F]">
-                        AED {calculateItemAmount(item).toFixed(2)}
-                      </span>
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="text-sm">
+                        {item.description && item.unitPrice > 0 && (
+                          <VATVerificationButton
+                            vendorName={invoiceData.customerName}
+                            category={item.description}
+                            description={item.description}
+                            selectedRateType={item.vatRateType || 'standard'}
+                            amount={calculateItemAmount(item)}
+                            vatAmount={calculateItemVAT(item)}
+                            onValidationComplete={(result) => {
+                              if (!result.isValid) {
+                                console.log('VAT validation warnings for item:', item.description, result.warnings);
+                              }
+                            }}
+                            onRateSuggested={(suggestedRate) => {
+                              // Update the line item's VAT rate
+                              updateVATRateType(item.id, suggestedRate as 'standard' | 'zero-rated' | 'exempt');
+                            }}
+                          />
+                        )}
+                      </div>
+                      <div className="text-right text-sm">
+                        <span className="text-gray-600">Amount: </span>
+                        <span className="font-medium text-[#1B4B7F]">
+                          AED {calculateItemAmount(item).toFixed(2)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -265,6 +408,11 @@ export const InvoiceGenerator: React.FC = () => {
 
           <Card>
             <h3 className="font-semibold text-gray-700 mb-4">Actions</h3>
+            {saveError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-sm mb-4">
+                {saveError}
+              </div>
+            )}
             <div className="space-y-3">
               <Button className="w-full" onClick={() => setShowPreview(true)}>
                 <Eye size={18} /> Preview Invoice
@@ -272,11 +420,21 @@ export const InvoiceGenerator: React.FC = () => {
               <Button variant="secondary" className="w-full">
                 <Download size={18} /> Download PDF
               </Button>
-              <Button variant="secondary" className="w-full">
-                <Mail size={18} /> Email Invoice
+              <Button 
+                variant="secondary" 
+                className="w-full"
+                onClick={() => handleSaveInvoice('sent')}
+                disabled={saving}
+              >
+                <Mail size={18} /> Save & Send
               </Button>
-              <Button variant="tertiary" className="w-full">
-                <Save size={18} /> Save Draft
+              <Button 
+                variant="tertiary" 
+                className="w-full"
+                onClick={() => handleSaveInvoice('draft')}
+                disabled={saving}
+              >
+                <Save size={18} /> {saving ? 'Saving...' : 'Save Draft'}
               </Button>
             </div>
           </Card>
@@ -291,8 +449,8 @@ export const InvoiceGenerator: React.FC = () => {
       >
         <div className="bg-white p-8 border border-gray-200">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-[#1B4B7F]">{user?.businessName}</h2>
-            <p className="text-gray-600">TRN: {user?.trn}</p>
+            <h2 className="text-3xl font-bold text-[#1B4B7F]">{user?.businessProfile?.business_name || 'Business Name'}</h2>
+            <p className="text-gray-600">TRN: {user?.businessProfile?.trn || 'Not set'}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-8 mb-8">

@@ -1,11 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Camera, Upload, Check, AlertCircle, X } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
+import { useApp } from '../context/AppContext';
+import { createExpense, uploadReceipt } from '../lib/supabase';
+import { VATVerificationButton } from '../components/VATVerificationButton';
+import { getVATCategories } from '../lib/supabase';
 
 export const ReceiptScanner: React.FC = () => {
+  const { user } = useApp();
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [extractedData, setExtractedData] = useState({
     vendor: '',
     trn: '',
@@ -15,21 +23,25 @@ export const ReceiptScanner: React.FC = () => {
     category: '',
     notes: ''
   });
+  const [vatRateType, setVatRateType] = useState<'standard' | 'zero-rated' | 'exempt'>('standard');
+  const [vatCategories, setVatCategories] = useState<any[]>([]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setUploadedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setUploadedImage(reader.result as string);
+        // Simulate OCR extraction (in real app, this would call an OCR service)
         setTimeout(() => {
           setExtractedData({
-            vendor: 'Emirates Office Supplies',
-            trn: '100234567891234',
-            date: '2026-01-27',
-            amount: '1250.00',
-            vat: '59.52',
-            category: 'office-supplies',
+            vendor: '',
+            trn: '',
+            date: new Date().toISOString().split('T')[0],
+            amount: '',
+            vat: '',
+            category: '',
             notes: ''
           });
         }, 1500);
@@ -37,6 +49,29 @@ export const ReceiptScanner: React.FC = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  // Load VAT categories on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      const { data } = await getVATCategories();
+      if (data) setVatCategories(data);
+    };
+    loadCategories();
+  }, []);
+
+  // Auto-calculate VAT based on rate type
+  useEffect(() => {
+    if (extractedData.amount && vatRateType === 'standard') {
+      const amount = Number(extractedData.amount) || 0;
+      const calculatedVAT = amount * 0.05;
+      if (extractedData.vat !== calculatedVAT.toFixed(2)) {
+        setExtractedData({ ...extractedData, vat: calculatedVAT.toFixed(2) });
+      }
+    } else if (vatRateType !== 'standard' && extractedData.vat !== '0.00') {
+      setExtractedData({ ...extractedData, vat: '0.00' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vatRateType, extractedData.amount]);
 
   const validateTRN = (trn: string) => {
     const cleaned = trn.replace(/\s/g, '');
@@ -48,18 +83,86 @@ export const ReceiptScanner: React.FC = () => {
 
   const trnValidation = validateTRN(extractedData.trn);
 
-  const handleSave = () => {
-    alert('Expense saved successfully!');
-    setUploadedImage(null);
-    setExtractedData({
-      vendor: '',
-      trn: '',
-      date: '',
-      amount: '',
-      vat: '',
-      category: '',
-      notes: ''
-    });
+  const handleSave = async () => {
+    if (!user?.businessProfile?.id) {
+      setSaveError('Please complete your business profile first');
+      return;
+    }
+
+    if (!extractedData.vendor.trim()) {
+      setSaveError('Vendor name is required');
+      return;
+    }
+
+    if (!extractedData.date) {
+      setSaveError('Date is required');
+      return;
+    }
+
+    if (!extractedData.amount || Number(extractedData.amount) <= 0) {
+      setSaveError('Valid amount is required');
+      return;
+    }
+
+    if (!extractedData.category) {
+      setSaveError('Category is required');
+      return;
+    }
+
+    setSaving(true);
+    setSaveError('');
+
+    try {
+      let receiptUrl = null;
+      if (uploadedFile && user.id) {
+        const { url, error: uploadError } = await uploadReceipt(user.id, uploadedFile);
+        if (uploadError) {
+          console.error('Receipt upload error:', uploadError);
+          // Continue without receipt URL
+        } else {
+          receiptUrl = url;
+        }
+      }
+
+      const amount = Number(extractedData.amount);
+      const vatAmount = Number(extractedData.vat) || 0;
+      const total = amount + vatAmount;
+
+      const { error } = await createExpense({
+        business_id: user.businessProfile.id,
+        vendor_name: extractedData.vendor,
+        vendor_trn: extractedData.trn || null,
+        date: extractedData.date,
+        amount: amount,
+        vat_amount: vatAmount,
+        total: total,
+        category: extractedData.category,
+        receipt_url: receiptUrl,
+        notes: extractedData.notes || null,
+      });
+
+      if (error) {
+        setSaveError(error.message || 'Failed to save expense');
+        setSaving(false);
+      } else {
+        alert('Expense saved successfully!');
+        setUploadedImage(null);
+        setUploadedFile(null);
+        setExtractedData({
+          vendor: '',
+          trn: '',
+          date: new Date().toISOString().split('T')[0],
+          amount: '',
+          vat: '',
+          category: '',
+          notes: ''
+        });
+        setSaving(false);
+      }
+    } catch (error: any) {
+      setSaveError(error.message || 'An error occurred while saving');
+      setSaving(false);
+    }
   };
 
   return (
@@ -138,6 +241,12 @@ export const ReceiptScanner: React.FC = () => {
         <Card>
           <h2 className="text-xl font-semibold text-[#1B4B7F] mb-6">Expense Details</h2>
 
+          {saveError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+              {saveError}
+            </div>
+          )}
+
           <div className="space-y-4">
             <Input
               label="Vendor Name"
@@ -194,8 +303,67 @@ export const ReceiptScanner: React.FC = () => {
                 value={extractedData.vat}
                 onChange={(e) => setExtractedData({ ...extractedData, vat: e.target.value })}
                 required
+                disabled={vatRateType !== 'standard'}
               />
             </div>
+
+            {/* VAT Rate Selector */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">VAT Treatment</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setVatRateType('standard')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                    vatRateType === 'standard'
+                      ? 'bg-green-600 text-white'
+                      : 'bg-green-100 text-green-800 hover:bg-green-200'
+                  }`}
+                >
+                  Standard (5%)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVatRateType('zero-rated')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                    vatRateType === 'zero-rated'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                  }`}
+                >
+                  Zero-Rated (0%)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setVatRateType('exempt')}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors ${
+                    vatRateType === 'exempt'
+                      ? 'bg-yellow-600 text-white'
+                      : 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                  }`}
+                >
+                  Exempt (0%)
+                </button>
+              </div>
+            </div>
+
+            {/* VAT Verification Button */}
+            {extractedData.amount && Number(extractedData.amount) > 0 && (
+              <VATVerificationButton
+                vendorName={extractedData.vendor}
+                category={extractedData.category}
+                description={extractedData.notes}
+                selectedRateType={vatRateType}
+                amount={Number(extractedData.amount) || 0}
+                vatAmount={Number(extractedData.vat) || 0}
+                onValidationComplete={(result) => {
+                  if (!result.isValid) {
+                    // Optionally prevent submission or show additional warning
+                    console.log('VAT validation warnings:', result.warnings);
+                  }
+                }}
+              />
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -234,24 +402,27 @@ export const ReceiptScanner: React.FC = () => {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button className="flex-1" onClick={handleSave}>
-                <Check size={18} /> Save Expense
+              <Button className="flex-1" onClick={handleSave} disabled={saving}>
+                <Check size={18} /> {saving ? 'Saving...' : 'Save Expense'}
               </Button>
               <Button
                 variant="secondary"
                 className="flex-1"
                 onClick={() => {
                   setUploadedImage(null);
+                  setUploadedFile(null);
                   setExtractedData({
                     vendor: '',
                     trn: '',
-                    date: '',
+                    date: new Date().toISOString().split('T')[0],
                     amount: '',
                     vat: '',
                     category: '',
                     notes: ''
                   });
+                  setSaveError('');
                 }}
+                disabled={saving}
               >
                 Scan Another
               </Button>

@@ -13,6 +13,8 @@ const refundLocations = [
     terminals: 'Terminal 1, 2, 3 & Business Class',
     location: 'Departures area - Before check-in counters',
     hours: '24/7',
+    phone: '+971 4 224 5555',
+    email: 'customer.care@dubaiairports.ae',
     coordinates: { lat: 25.2532, lng: 55.3657 },
     googleMapsUrl: 'https://maps.google.com/?q=25.2532,55.3657',
     notes: 'Visit Planet counter BEFORE checking in luggage',
@@ -20,9 +22,11 @@ const refundLocations = [
   {
     id: 'auh',
     name: 'Zayed International Airport (AUH)',
-    terminals: 'Common area between all terminals',
+    terminals: 'Terminal A - Common area',
     location: 'Departures area - Before check-in counters',
     hours: '24/7',
+    phone: '+971 2 505 5555',
+    email: 'info@adac.ae',
     coordinates: { lat: 24.4330, lng: 54.6511 },
     googleMapsUrl: 'https://maps.google.com/?q=24.4330,54.6511',
     notes: 'Previously known as Abu Dhabi International Airport',
@@ -32,7 +36,9 @@ const refundLocations = [
     name: 'Sharjah International Airport (SHJ)',
     terminals: 'Main Terminal',
     location: 'Departures area',
-    hours: 'Flight hours',
+    hours: '24/7',
+    phone: '+971 6 558 1111',
+    email: 'info@sharjahairport.ae',
     coordinates: { lat: 25.3286, lng: 55.5172 },
     googleMapsUrl: 'https://maps.google.com/?q=25.3286,55.5172',
     notes: 'Check operating hours before visiting',
@@ -43,6 +49,8 @@ const refundLocations = [
     terminals: 'Main Terminal',
     location: 'Departures area',
     hours: 'Flight hours',
+    phone: '+971 4 224 5555',
+    email: 'customer.care@dubaiairports.ae',
     coordinates: { lat: 24.8962, lng: 55.1614 },
     googleMapsUrl: 'https://maps.google.com/?q=24.8962,55.1614',
     notes: 'Dubai World Central - Dubai South',
@@ -53,9 +61,11 @@ const refundLocations = [
     terminals: 'Main Terminal',
     location: 'Departures area',
     hours: 'Flight hours',
+    phone: '+971 2 505 5555',
+    email: 'info@adac.ae',
     coordinates: { lat: 24.2617, lng: 55.6092 },
     googleMapsUrl: 'https://maps.google.com/?q=24.2617,55.6092',
-    notes: null,
+    notes: 'Operated by Abu Dhabi Airports',
   },
   {
     id: 'rak',
@@ -63,6 +73,8 @@ const refundLocations = [
     terminals: 'Main Terminal',
     location: 'Departures area',
     hours: 'Flight hours',
+    phone: '+971 7 207 5200',
+    email: 'administration@rakairport.com',
     coordinates: { lat: 25.6133, lng: 55.9389 },
     googleMapsUrl: 'https://maps.google.com/?q=25.6133,55.9389',
     notes: null,
@@ -73,6 +85,8 @@ const refundLocations = [
     terminals: 'Main Terminal',
     location: 'Departures area',
     hours: 'Flight hours',
+    phone: '+971 9 222 6222',
+    email: null,
     coordinates: { lat: 25.1122, lng: 56.3240 },
     googleMapsUrl: 'https://maps.google.com/?q=25.1122,56.3240',
     notes: null,
@@ -373,7 +387,30 @@ export const TouristRefund: React.FC = () => {
                   <Navigation className="w-4 h-4" />
                 </button>
               </div>
-              <div className="mt-3 flex items-center justify-between">
+              
+              {/* Contact Details */}
+              <div className="mt-3 pt-3 border-t border-gray-200 space-y-1">
+                {location.phone && (
+                  <a 
+                    href={`tel:${location.phone}`}
+                    className="text-xs text-[#1B4B7F] hover:underline flex items-center gap-1"
+                  >
+                    <Phone className="w-3 h-3" />
+                    {location.phone}
+                  </a>
+                )}
+                {location.email && (
+                  <a 
+                    href={`mailto:${location.email}`}
+                    className="text-xs text-[#1B4B7F] hover:underline flex items-center gap-1"
+                  >
+                    <Mail className="w-3 h-3" />
+                    {location.email}
+                  </a>
+                )}
+              </div>
+              
+              <div className="mt-2 flex items-center justify-between">
                 <span className="text-xs text-green-600 flex items-center gap-1">
                   <Clock className="w-3 h-3" />
                   {location.hours}
@@ -404,6 +441,15 @@ export const TouristRefund: React.FC = () => {
                   <div>
                     <p className="font-medium text-gray-900 text-sm">{location.name}</p>
                     <p className="text-xs text-gray-500 mt-1">{location.hours}</p>
+                    {location.phone && (
+                      <a 
+                        href={`tel:${location.phone}`}
+                        className="text-xs text-[#1B4B7F] hover:underline flex items-center gap-1 mt-1"
+                      >
+                        <Phone className="w-3 h-3" />
+                        {location.phone}
+                      </a>
+                    )}
                   </div>
                   <button
                     onClick={() => openGoogleMaps(location.googleMapsUrl)}

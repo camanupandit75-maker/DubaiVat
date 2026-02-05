@@ -48,3 +48,4 @@ CREATE TRIGGER update_individual_profiles_updated_at
   EXECUTE FUNCTION update_individual_profiles_updated_at();
 
 
+

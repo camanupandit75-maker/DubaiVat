@@ -11,3 +11,4 @@ COMMENT ON COLUMN invoice_items.vat_rate IS 'VAT rate percentage for this invoic
 
 
 
+

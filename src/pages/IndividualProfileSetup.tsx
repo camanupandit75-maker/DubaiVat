@@ -179,3 +179,4 @@ export const IndividualProfileSetup: React.FC<IndividualProfileSetupProps> = ({ 
 };
 
 
+
